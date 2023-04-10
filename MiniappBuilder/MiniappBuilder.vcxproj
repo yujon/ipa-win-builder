@@ -1,0 +1,238 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{469259AB-0F25-4B5E-B15C-591001FB9448}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>MiniappBuilder</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>MiniappBuilder</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Program Files\OpenSSL-Win64\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files\OpenSSL-Win64\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\Program Files\OpenSSL-Win64\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files\OpenSSL-Win64\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;CORECRYPTO_DONOT_USE_TRANSPARENT_UNION;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\AltSign;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libplist\include;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libimobiledevice\include;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libimobiledevice;$(ProjectDir)..\Dependencies\libimobiledevice-vs;C:\Program Files\Bonjour SDK\Include;$(ProjectDir)..\Dependencies\WinSparkle\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libssl.lib;libcrypto.lib;Ws2_32.lib;dnssd.lib;plist.lib;regex.lib;ldid.lib;corecrypto.lib;WinSparkle.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\;C:\Program Files\Bonjour SDK\Lib\Win32;C:\Users\User\Documents\vcpkg\packages\cpprestsdk_x86-windows\lib;$(SolutionDir)AltSign\Dependencies\regex\lib;$(SolutionDir)$(Configuration)\;$(SolutionDir)Dependencies\Libraries;$(SolutionDir)AltSign\Dependencies\corecrypto;$(SolutionDir)Dependencies\WinSparkle\Release;C:\Program Files\OpenSSL-Win64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;CORECRYPTO_DONOT_USE_TRANSPARENT_UNION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\AltSign;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libplist\include;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libimobiledevice\include;C:\Program Files\Bonjour SDK\Include;$(ProjectDir)..\Dependencies\WinSparkle\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Ws2_32.lib;dnssd.lib;plist.lib;regex.lib;ldid.lib;corecrypto.lib;WinSparkle.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\;C:\Program Files\Bonjour SDK\Lib\Win32;C:\Users\User\Documents\vcpkg\packages\cpprestsdk_x86-windows\lib;$(SolutionDir)AltSign\Dependencies\regex\lib;$(SolutionDir)$(Configuration)\;$(SolutionDir)Dependencies\Libraries;$(SolutionDir)AltSign\Dependencies\corecrypto;$(SolutionDir)Dependencies\WinSparkle\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;CORECRYPTO_DONOT_USE_TRANSPARENT_UNION;HAVE_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\AltSign;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libplist\include;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libimobiledevice\include;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libimobiledevice;$(ProjectDir)..\Dependencies\libimobiledevice-vs;C:\Program Files\Bonjour SDK\Include;$(ProjectDir)..\Dependencies\WinSparkle\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\;C:\Program Files\Bonjour SDK\Lib\Win32;C:\Users\User\Documents\vcpkg\packages\cpprestsdk_x86-windows\lib;$(SolutionDir)AltSign\Dependencies\regex\lib;$(SolutionDir)$(Configuration)\;$(SolutionDir)Dependencies\Libraries;$(SolutionDir)AltSign\Dependencies\corecrypto;$(SolutionDir)Dependencies\WinSparkle\Release;C:\Program Files\OpenSSL-Win64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libssl.lib;libcrypto.lib;Ws2_32.lib;dnssd.lib;plist.lib;regex.lib;ldid.lib;corecrypto.lib;WinSparkle.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Manifest>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
+    </Manifest>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\AltSign;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libplist\include;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libimobiledevice\include;C:\Program Files\Bonjour SDK\Include;$(ProjectDir)..\Dependencies\WinSparkle\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\;C:\Program Files\Bonjour SDK\Lib\Win32;C:\Users\User\Documents\vcpkg\packages\cpprestsdk_x86-windows\lib;$(SolutionDir)AltSign\Dependencies\regex\lib;$(SolutionDir)$(Configuration)\;$(SolutionDir)Dependencies\Libraries;$(SolutionDir)AltSign\Dependencies\corecrypto;$(SolutionDir)Dependencies\WinSparkle\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;dnssd.lib;plist.lib;regex.lib;ldid.lib;corecrypto.lib;WinSparkle.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="MiniappBuilder.cpp" />
+    <ClCompile Include="MiniappBuilderCore.cpp" />
+    <ClCompile Include="AnisetteDataManager.cpp" />
+    <ClCompile Include="ClientConnection.cpp" />
+    <ClCompile Include="ConnectionError.cpp" />
+    <ClCompile Include="ConnectionManager.cpp" />
+    <ClCompile Include="DebugConnection.cpp" />
+    <ClCompile Include="DeveloperDiskManager.cpp" />
+    <ClCompile Include="DeviceManager.cpp" />
+    <ClCompile Include="InstalledApp.cpp" />
+    <ClCompile Include="NotificationConnection.cpp" />
+    <ClCompile Include="ServerError.cpp" />
+    <ClCompile Include="WiredConnection.cpp" />
+    <ClCompile Include="WirelessConnection.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AltInclude.h" />
+    <ClInclude Include="MiniappBuilderCore.h" />
+    <ClInclude Include="AnisetteDataManager.h" />
+    <ClInclude Include="ClientConnection.h" />
+    <ClInclude Include="ConnectionError.hpp" />
+    <ClInclude Include="ConnectionManager.hpp" />
+    <ClInclude Include="DebugConnection.h" />
+    <ClInclude Include="DeveloperDiskManager.h" />
+    <ClInclude Include="DeviceManager.hpp" />
+    <ClInclude Include="InstalledApp.h" />
+    <ClInclude Include="InstallError.hpp" />
+    <ClInclude Include="NotificationConnection.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Semaphore.h" />
+    <ClInclude Include="ServerError.hpp" />
+    <ClInclude Include="WiredConnection.h" />
+    <ClInclude Include="WirelessConnection.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\Pictures\AltServerIcon Icons\ICO files\AltServerIcon_win7.ico" />
+    <Image Include="..\..\menubaricon_dark.ico" />
+    <Image Include="..\Resources\Icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AltSign\AltSign.vcxproj">
+      <Project>{3dd5ea43-d078-46fe-b5c2-bb6213f936cd}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Dependencies\libimobiledevice-vs\imobiledevice.vcxproj">
+      <Project>{ee16e7f2-ac27-4e30-ab22-b02a9c2380b4}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Dependencies\libimobiledevice-vs\libplist.vcxproj">
+      <Project>{75352a45-bcb8-4774-8c66-3af9ea6b6b42}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Dependencies\libimobiledevice-vs\libusbmuxd.vcxproj">
+      <Project>{527ae686-cd0e-4bc2-9b0f-4bc4cf9621e0}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ldid\ldid.vcxproj">
+      <Project>{147d42db-4b88-4b3f-8548-6e11fb51c589}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
