@@ -4,7 +4,7 @@
 
 #include <WS2tcpip.h>
 
-#define odslog(msg) { std::stringstream ss; ss << msg << std::endl; OutputDebugStringA(ss.str().c_str()); }
+#define odslog(msg) {  std::cout << msg << std::endl; }
 
 char* bin2hex(const unsigned char* bin, size_t length)
 {

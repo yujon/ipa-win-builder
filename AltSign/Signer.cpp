@@ -113,7 +113,7 @@ namespace fs = std::filesystem;
 
 extern std::string make_uuid();
 
-#define odslog(msg) { std::stringstream ss; ss << msg << std::endl; OutputDebugStringA(ss.str().c_str()); }
+#define odslog(msg) {  std::cout << msg << std::endl; }
 
 std::string CertificatesContent(std::shared_ptr<Certificate> altCertificate)
 {

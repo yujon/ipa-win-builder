@@ -32,7 +32,7 @@ typedef id(__cdecl* GETOBJECTFUNC)();
 typedef id(__cdecl* CLIENTINFOFUNC)(id obj);
 typedef id(__cdecl* COPYANISETTEDATAFUNC)(void *, int, void *);
 
-#define odslog(msg) { std::stringstream ss; ss << msg << std::endl; OutputDebugStringA(ss.str().c_str()); }
+#define odslog(msg) {  std::cout << msg << std::endl; }
 
 extern std::string StringFromWideString(std::wstring wideString);
 

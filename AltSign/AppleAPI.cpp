@@ -50,7 +50,7 @@ extern std::string make_uuid();
 extern std::string StringFromWideString(std::wstring wideString);
 extern std::wstring WideStringFromString(std::string string);
 
-#define odslog(msg) { std::stringstream ss; ss << msg << std::endl; OutputDebugStringA(ss.str().c_str()); }
+#define odslog(msg) {  std::cout << msg << std::endl; }
 
 bool decompress(const uint8_t* input, size_t input_size, std::vector<uint8_t>& output)
 {
@@ -429,7 +429,7 @@ pplx::task<std::shared_ptr<AppID>> AppleAPI::AddAppID(std::string name, std::str
         { "name", name },
         { "identifier", bundleIdentifier },
     };
-    
+    std::cout << "AddAppID bundleId:" << bundleIdentifier << std::endl;
     auto task = this->SendRequest("ios/addAppId.action", parameters, session, team)
     .then([=](plist_t plist)
           {
@@ -477,7 +477,7 @@ pplx::task<std::shared_ptr<AppID>> AppleAPI::UpdateAppID(std::shared_ptr<AppID> 
 	{
 		parameters[feature.first] = feature.second;
 	}
-
+	std::cout << "UpdateAppID bundleId:" << appID << std::endl;
 	auto task = this->SendRequest("ios/updateAppId.action", parameters, session, team)
 		.then([=](plist_t plist)
 			{

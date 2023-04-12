@@ -15,7 +15,7 @@
 
 #include <codecvt>
 
-#define odslog(msg) { std::stringstream ss; ss << msg << std::endl; OutputDebugStringA(ss.str().c_str()); }
+#define odslog(msg) {  std::cout << msg << std::endl; }
 
 extern std::string make_uuid();
 extern std::string temporary_directory();

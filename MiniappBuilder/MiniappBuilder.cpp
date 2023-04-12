@@ -1,7 +1,6 @@
-// HelloWindowsDesktop.cpp
-// compile with: /D_UNICODE /DUNICODE /DWIN32 /D_WINDOWS /c
 #include <windows.h>
 #include <windowsx.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
@@ -21,8 +20,6 @@
 
 #include <combaseapi.h>
 
-#pragma comment( lib, "gdiplus.lib" ) 
-#include <gdiplus.h> 
 
 // AltSign
 #include "DeviceManager.hpp"
@@ -32,14 +29,10 @@
 
 #include <pplx/pplxtasks.h>
 
-#pragma comment(linker,"\"/manifestdependency:type='win32' \
-name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
-processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-
 extern std::string StringFromWideString(std::wstring wideString);
 extern std::wstring WideStringFromString(std::string string);
 
-#define odslog(msg) { std::stringstream ss; ss << msg << std::endl; OutputDebugStringA(ss.str().c_str()); }
+#define odslog(msg) {  std::cout << msg << std::endl; }
 
 std::string make_uuid()
 {
@@ -109,20 +102,35 @@ std::vector<unsigned char> readFile(const char* filename)
 }
 
 
-int CALLBACK WinMain(
-	_In_ HINSTANCE hInstance,
-	_In_ HINSTANCE hPrevInstance,
-	_In_ LPSTR     lpCmdLine,
-	_In_ int       nCmdShow
-)
+//MiniappBuilder.exe  <appleId> <password> <ipaFile>
+int main(int argc, char* argv[])
 {
+	std::map<std::string, std::wstring> parameters = { {"title", (wchar_t*)L"title text"}, {"message", (wchar_t*)L"message test"} };
+
+	if (argc <= 3) {
+		odslog("Error: the lenght of arguments should more than 3");
+		return -1;
+	}
+	std::string appleID = argv[1];
+	std::string password = argv[2];
+	std::string ipaFilepath = argv[3];
+	if (appleID.empty()) {
+		odslog("Error: appleID is undefined");
+		return -1;
+	}
+	if (password.empty()) {
+		odslog("Error: password is undefined");
+		return -1;
+	}
+	if (ipaFilepath.empty()) {
+		odslog("Error: ipaFilepath is undefined");
+		return -1;
+	}
+
 	MiniappBuilderCore::instance()->Start();
-	std::string appleID = "8618819259301";
-	std::string password = "8618819259301";
-	std::optional<std::string> _ipaFilepath = "C:\\Users\\coverguo\\Desktop\\demo.ipa";
 	auto devices = DeviceManager::instance()->availableDevices();
 	std::shared_ptr<Device> _selectedDevice = devices[0];
-	auto task = MiniappBuilderCore::instance()->InstallApplication(_ipaFilepath, _selectedDevice, appleID, password);
+	auto task = MiniappBuilderCore::instance()->InstallApplication(ipaFilepath, _selectedDevice, appleID, password);
 
 	try
 	{
@@ -131,10 +139,12 @@ int CALLBACK WinMain(
 	catch (Error& error)
 	{
 		odslog("Error: " << error.domain() << " (" << error.code() << ").")
+		return -1;
 	}
 	catch (std::exception& exception)
 	{
 		odslog("Exception: " << exception.what());
+		return -1;
 	}
 
 	odslog("Finished!");

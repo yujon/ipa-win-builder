@@ -4,7 +4,7 @@
 #include <WinSock2.h>
 #include <cpprest/json.h>
 
-#define odslog(msg) { std::stringstream ss; ss << msg << std::endl; OutputDebugStringA(ss.str().c_str()); }
+#define odslog(msg) {  std::cout << msg << std::endl; }
 
 void ALTDeviceReceivedNotification(const char* notification, void* user_data)
 {

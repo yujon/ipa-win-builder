@@ -98,7 +98,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>libssl.lib;libcrypto.lib;Ws2_32.lib;dnssd.lib;plist.lib;regex.lib;ldid.lib;corecrypto.lib;WinSparkle.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Platform)\$(Configuration)\;C:\Program Files\Bonjour SDK\Lib\Win32;C:\Users\User\Documents\vcpkg\packages\cpprestsdk_x86-windows\lib;$(SolutionDir)AltSign\Dependencies\regex\lib;$(SolutionDir)$(Configuration)\;$(SolutionDir)Dependencies\Libraries;$(SolutionDir)AltSign\Dependencies\corecrypto;$(SolutionDir)Dependencies\WinSparkle\Release;C:\Program Files\OpenSSL-Win64\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -140,7 +140,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)..\AltSign;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libplist\include;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libimobiledevice\include;$(ProjectDir)..\Dependencies\libimobiledevice-vs\libimobiledevice;$(ProjectDir)..\Dependencies\libimobiledevice-vs;C:\Program Files\Bonjour SDK\Include;$(ProjectDir)..\Dependencies\WinSparkle\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -209,11 +209,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\..\..\..\Pictures\AltServerIcon Icons\ICO files\AltServerIcon_win7.ico" />
-    <Image Include="..\..\menubaricon_dark.ico" />
-    <Image Include="..\Resources\Icon.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AltSign\AltSign.vcxproj">

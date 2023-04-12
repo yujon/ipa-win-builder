@@ -33,7 +33,7 @@ extern std::wstring WideStringFromString(std::string string);
 
 extern bool decompress(const uint8_t* input, size_t input_size, std::vector<uint8_t>& output);
 
-#define odslog(msg) { std::stringstream ss; ss << msg << std::endl; OutputDebugStringA(ss.str().c_str()); }
+#define odslog(msg) {  std::cout << msg << std::endl; }
 
 //struct ccrng_state* ccDRBGGetRngState(void);
 

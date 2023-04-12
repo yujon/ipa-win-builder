@@ -15,7 +15,7 @@
 #include <filesystem>
 #include <WinSock2.h>
 
-#define odslog(msg) { std::stringstream ss; ss << msg << std::endl; OutputDebugStringA(ss.str().c_str()); }
+#define odslog(msg) {  std::cout << msg << std::endl; }
 
 extern std::vector<unsigned char> readFile(const char* filename);
 

@@ -1,14 +1,5 @@
-//
-//  MiniappBuilderCore.cpp
-//  
-//
-//  Created by Riley Testut on 8/30/19.
-//  Copyright (c) 2019 Riley Testut. All rights reserved.
-//
-
-#include "MiniappBuilderCore.h"
-#include <windows.h>
 #include <windowsx.h>
+#include "MiniappBuilderCore.h"
 #include <strsafe.h>
 #include <Guiddef.h>
 
@@ -42,7 +33,7 @@
 
 #include <winsparkle.h>
 
-#define odslog(msg) { std::stringstream ss; ss << msg << std::endl; OutputDebugStringA(ss.str().c_str()); }
+#define odslog(msg) {  std::cout << msg << std::endl; }
 
 using namespace utility;                    // Common utilities like string conversions
 using namespace web;                        // Common features like URIs.
@@ -247,7 +238,6 @@ BOOL CALLBACK TwoFactorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lP
 	case WM_INITDIALOG:
 	{
 		Edit_SetCueBannerText(verificationCodeTextField, L"123456");
-		Button_Enable(submitButton, false);
 
 		break;
 	}
@@ -269,8 +259,6 @@ BOOL CALLBACK TwoFactorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lP
 		{
 		case EN_CHANGE:
 		{
-			/*PostMessage(hWnd, WM_CLOSE, 0, 0);
-			break;*/
 
 			int codeLength = Edit_GetTextLength(verificationCodeTextField);
 			if (codeLength == 6)
@@ -448,7 +436,6 @@ void MiniappBuilderCore::Stop()
 pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApplication(std::optional<std::string> filepath, std::shared_ptr<Device> installDevice, std::string appleID, std::string password)
 {
     auto appName =fs::path(*filepath).filename().string();
-    auto localizedFailure = "Could not install " + appName + " to " + installDevice->name() + ".";
 
 	return this->_InstallApplication(filepath, installDevice, appleID, password)
 	.then([=](pplx::task<std::shared_ptr<Application>> task) -> pplx::task<std::shared_ptr<Application>> {
@@ -502,7 +489,7 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApplication(
 			}
 			else
 			{
-                odslog(error.localizedDescription() + localizedFailure);
+                odslog(error.localizedDescription());
                 throw;
 			}
 		}
@@ -513,7 +500,7 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApplication(
 				AnisetteDataManager::instance()->ResetProvisioning();
 			}
 
-            odslog(error.localizedDescription() + localizedFailure);
+            odslog(error.localizedDescription());
             throw;
 		}
 		catch (AnisetteError& error)
@@ -523,7 +510,7 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApplication(
 		}
 		catch (std::exception& exception)
 		{
-           odslog(localizedFailure);
+           odslog("Could not install " + appName + " to " + installDevice->name() + ".");
             throw;
 		}
 	});
@@ -605,17 +592,13 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::_InstallApplication
           })
     .then([=](fs::path downloadedAppPath)
           {
-			odslog("Downloaded app!");
 
               fs::create_directory(destinationDirectoryPath);
               
               auto appBundlePath = UnzipAppBundle(downloadedAppPath.string(), destinationDirectoryPath.string());
 			  auto app = std::make_shared<Application>(appBundlePath);
 
-			  if (filepath.has_value())
-			  {
-				odslog("Installing " + app->name() + " to " +  device->name());
-			  }
+			  odslog("Installing " + app->name() + " to " +  device->name());
 			  
               return app;
           })
