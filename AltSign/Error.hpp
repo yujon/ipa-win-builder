@@ -260,7 +260,7 @@ public:
     
     virtual std::string domain() const
     {
-        return "com.rileytestut.ALTAppleAPI";
+        return "com.tencent.ALTAppleAPI";
     }
     
     virtual std::string localizedDescription() const
@@ -347,7 +347,7 @@ public:
     
     virtual std::string domain() const
     {
-        return "com.rileytestut.AltSign";
+        return "com.tencent.AltSign";
     }
     
     virtual std::string localizedDescription() const
@@ -392,7 +392,7 @@ public:
     
     virtual std::string domain() const
     {
-        return "com.rileytestut.Archive";
+        return "com.tencent.miniappBuilder";
     }
     
     virtual std::string localizedDescription() const

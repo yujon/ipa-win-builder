@@ -38,7 +38,8 @@ typedef short ssize_t;      /* is this even possible? */
 
 extern std::vector<unsigned char> readFile(const char* filename);
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 #define SECONDS_FROM_1970_TO_APPLE_REFERENCE_DATE 978307200
 

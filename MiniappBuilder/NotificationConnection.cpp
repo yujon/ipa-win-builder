@@ -4,7 +4,8 @@
 #include <WinSock2.h>
 #include <cpprest/json.h>
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 void ALTDeviceReceivedNotification(const char* notification, void* user_data)
 {
@@ -19,7 +20,7 @@ void ALTDeviceReceivedNotification(const char* notification, void* user_data)
 NotificationConnection::NotificationConnection(std::shared_ptr<Device> device, np_client_t client) : _device(device), _client(client)
 {
 	this->setReceivedNotificationHandler([](std::string notification) {
-		odslog("Received Notification: " << notification);
+		stdoutlog("Received Notification: " << notification);
 	});
 }
 

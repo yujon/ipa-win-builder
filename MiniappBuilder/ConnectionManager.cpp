@@ -38,7 +38,8 @@
 #define WIRED_SERVER_CONNECTION_AVAILABLE_RESPONSE "io.altstore.Response.WiredServerConnectionAvailable"
 #define WIRED_SERVER_CONNECTION_START_REQUEST "io.altstore.Request.WiredServerConnectionStart"
 
-#define odslog(msg) { std::wstringstream ss; ss << msg << std::endl; OutputDebugStringW(ss.str().c_str()); }
+#define stdoutlog(msg) { std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 void DNSSD_API ConnectionManagerBonjourRegistrationFinished(DNSServiceRef service, DNSServiceFlags flags, DNSServiceErrorType errorCode, const char *name, const char *regtype, const char *domain, void *context)
 {
@@ -206,7 +207,7 @@ void ConnectionManager::Listen()
             int port2 = ntohs(((struct sockaddr_in)clientAddress).sin_port);
 			int error = WSAGetLastError();
 
-			odslog("Other Socket:" << other_socket << ". Port: " << port2 << ". Error: " << error);
+			stdoutlog("Other Socket:" << other_socket << ". Port: " << port2 << ". Error: " << error);
             
 			std::shared_ptr<ClientConnection> clientConnection(new WirelessConnection(other_socket));
 			this->HandleRequest(clientConnection);
@@ -225,7 +226,7 @@ void ConnectionManager::Listen()
 
 void ConnectionManager::StartNotificationConnection(std::shared_ptr<Device> device)
 {
-	odslog("Starting notification connection to device: " << device->name().c_str());
+	stdoutlog("Starting notification connection to device: " << device->name().c_str());
 
 	DeviceManager::instance()->StartNotificationConnection(device)
 		.then([=](pplx::task<std::shared_ptr<NotificationConnection>> task) {
@@ -246,11 +247,11 @@ void ConnectionManager::StartNotificationConnection(std::shared_ptr<Device> devi
 		}
 		catch (Error& e)
 		{
-			odslog("Failed to start notification connection. " << e.localizedDescription().c_str());
+			stderrlog("Failed to start notification connection. " << e.localizedDescription().c_str());
 		}
 		catch (std::exception& e)
 		{
-			odslog("Failed to start notification connection. " << e.what());
+			stderrlog("Failed to start notification connection. " << e.what());
 		}
 	});
 }
@@ -287,15 +288,15 @@ void ConnectionManager::HandleNotification(std::string notification, std::shared
 		{
 			connection->SendNotification(WIRED_SERVER_CONNECTION_AVAILABLE_RESPONSE);
 
-			odslog("Sent wired server connection available response!");
+			stdoutlog("Sent wired server connection available response!");
 		}
 		catch (Error& e)
 		{
-			odslog("Error sending wired server connection response. " << e.localizedDescription().c_str());
+			stderrlog("Error sending wired server connection response. " << e.localizedDescription().c_str());
 		}
 		catch (std::exception& e)
 		{
-			odslog("Error sending wired server connection response. " << e.what());
+			stderrlog("Error sending wired server connection response. " << e.what());
 		}
 	}
 	else if (notification == WIRED_SERVER_CONNECTION_START_REQUEST)
@@ -307,17 +308,17 @@ void ConnectionManager::HandleNotification(std::string notification, std::shared
 				auto wiredConnection = task.get();
 				auto connection = std::dynamic_pointer_cast<ClientConnection>(wiredConnection);
 
-				odslog("Started wired server connection!");
+				stdoutlog("Started wired server connection!");
 
 				this->HandleRequest(wiredConnection);
 			}
 			catch (Error& e)
 			{
-				odslog("Error starting wired server connection. " << e.localizedDescription().c_str());
+				stderrlog("Error starting wired server connection. " << e.localizedDescription().c_str());
 			}
 			catch (std::exception& e)
 			{
-				odslog("Error starting wired server connection. " << e.what());
+				stderrlog("Error starting wired server connection. " << e.what());
 			}
 		});
 	}
@@ -332,15 +333,15 @@ void ConnectionManager::HandleRequest(std::shared_ptr<ClientConnection> clientCo
 		{
 			task.get();
 
-			odslog("Finished handling request!");
+			stdoutlog("Finished handling request!");
 		}
 		catch (Error& e)
 		{
-			odslog("Failed to handle request: " << e.localizedDescription().c_str());
+			stderrlog("Failed to handle request: " << e.localizedDescription().c_str());
 		}
 		catch (std::exception& e)
 		{
-			odslog("Failed to handle request: " << e.what());
+			stderrlog("Failed to handle request: " << e.what());
 		}
 
         // Add short delay to prevent us from dropping connection too quickly.

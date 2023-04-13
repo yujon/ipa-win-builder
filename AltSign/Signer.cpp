@@ -113,7 +113,8 @@ namespace fs = std::filesystem;
 
 extern std::string make_uuid();
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 std::string CertificatesContent(std::shared_ptr<Certificate> altCertificate)
 {
@@ -294,11 +295,11 @@ void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningP
             return entitlements;
         }),
                    ldid::fun([&](const std::string &string) {
-			odslog("Signing: " << string);
+			stdoutlog("Signing: " << string);
 //            progress.completedUnitCount += 1;
         }),
                    ldid::fun([&](const double signingProgress) {
-			odslog("Signing Progress: " << signingProgress);
+			stdoutlog("Signing Progress: " << signingProgress);
         }));
         
         // Zip app back up.

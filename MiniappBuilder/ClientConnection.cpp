@@ -15,7 +15,8 @@
 
 #include <codecvt>
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 extern std::string make_uuid();
 extern std::string temporary_directory();
@@ -101,11 +102,11 @@ pplx::task<void> ClientConnection::ProcessAppRequest()
 				}
 				catch (Error& error)
 				{
-					odslog("[ALTLog] Failed to send error response: " << error.localizedDescription());
+					stderrlog("[ALTLog] Failed to send error response: " << error.localizedDescription());
 				}
 				catch (std::exception& exception)
 				{
-					odslog("[ALTLog] Failed to send error response: " << exception.what());
+					stderrlog("[ALTLog] Failed to send error response: " << exception.what());
 				}
 			});
 
@@ -152,7 +153,7 @@ pplx::task<void> ClientConnection::ProcessPrepareAppRequest(web::json::value req
 			}
 			catch (std::exception& e)
 			{
-				odslog("Failed to remove received .ipa." << e.what());
+				stderrlog("Failed to remove received .ipa." << e.what());
 			}
 		}
 
@@ -237,11 +238,11 @@ pplx::task<void> ClientConnection::InstallApp(std::string filepath, std::string 
 					}
 					catch (Error& error)
 					{
-						odslog("[ALTLog] Error sending installation progress: " << error.localizedDescription());
+						stderrlog("[ALTLog] Error sending installation progress: " << error.localizedDescription());
 					}
 					catch (std::exception &exception)
 					{
-						odslog("[ALTLog] Error sending installation progress: " << exception.what());
+						stderrlog("[ALTLog] Error sending installation progress: " << exception.what());
 					}					
 				});
 			});
@@ -528,12 +529,12 @@ pplx::task<void> ClientConnection::SendResponse(web::json::value json)
 		}
 		catch (Error& error)
 		{
-			odslog("Failed to send response. " << error.localizedDescription());
+			stderrlog("Failed to send response. " << error.localizedDescription());
 			throw;
 		}
 		catch (std::exception& exception)
 		{
-			odslog("Failed to send response. " << exception.what());
+			stderrlog("Failed to send response. " << exception.what());
 			throw;
 		}
 	});

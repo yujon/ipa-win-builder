@@ -16,7 +16,8 @@
 #include <iostream>
 #include <fstream>
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 extern std::string StringFromWideString(std::wstring wideString);
 extern std::wstring WideStringFromString(std::string string);
@@ -182,7 +183,7 @@ pplx::task<web::json::value> DeveloperDiskManager::FetchDeveloperDiskURLs()
 		})
 	.then([=](http_response response)
 		{
-			odslog("Received response status code: " << response.status_code());
+			stdoutlog("Received response status code: " << response.status_code());
 			return response.extract_vector();
 		})
 	.then([=](std::vector<unsigned char> decompressedData)

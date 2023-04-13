@@ -15,7 +15,8 @@
 #include <filesystem>
 #include <WinSock2.h>
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 extern std::vector<unsigned char> readFile(const char* filename);
 
@@ -226,7 +227,7 @@ std::map<std::string, plist_t> Application::entitlements()
 		}
 		else
 		{
-			odslog("Error parsing entitlements:\n" << rawEntitlements);
+			stderrlog("Error parsing entitlements:\n" << rawEntitlements);
 		}
 	}
 

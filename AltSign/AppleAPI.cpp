@@ -50,7 +50,8 @@ extern std::string make_uuid();
 extern std::string StringFromWideString(std::wstring wideString);
 extern std::wstring WideStringFromString(std::string string);
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 bool decompress(const uint8_t* input, size_t input_size, std::vector<uint8_t>& output)
 {
@@ -865,7 +866,7 @@ pplx::task<plist_t> AppleAPI::SendRequest(std::string uri,
 			})
 		.then([=](http_response response)
 			{
-				odslog("Received response status code: " << response.status_code());
+				stdoutlog("Received response status code: " << response.status_code());
 				return response.extract_vector();
 			})
 				.then([=](std::vector<unsigned char> compressedData)
@@ -983,7 +984,7 @@ pplx::task<json::value> AppleAPI::SendServicesRequest(std::string uri,
 			})
 		.then([=](http_response response)
 			{
-				odslog("Received response status code: " << response.status_code());
+				stdoutlog("Received response status code: " << response.status_code());
 				return response.extract_vector();
 			})
 				.then([=](std::vector<unsigned char> decompressedData)

@@ -32,7 +32,8 @@ typedef id(__cdecl* GETOBJECTFUNC)();
 typedef id(__cdecl* CLIENTINFOFUNC)(id obj);
 typedef id(__cdecl* COPYANISETTEDATAFUNC)(void *, int, void *);
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 extern std::string StringFromWideString(std::wstring wideString);
 
@@ -77,7 +78,7 @@ id __cdecl ALTClientInfoReplacementFunction(void*)
 
 	ObjcObject* clientInfo = (ObjcObject*)((id(*)(id, SEL, const char*))objc_msgSend)(NSString, stringInit, "<MacBookPro15,1> <Mac OS X;10.15.2;19C57> <com.apple.AuthKit/1 (com.apple.dt.Xcode/3594.4.19)>");
 
-	odslog("Swizzled Client Info: " << clientInfo->description());
+	stdoutlog("Swizzled Client Info: " << clientInfo->description());
 
 	return clientInfo;
 }
@@ -91,7 +92,7 @@ id __cdecl ALTDeviceIDReplacementFunction()
 
 	ObjcObject* deviceID = (ObjcObject*)((id(*)(id, SEL, const char*))objc_msgSend)(NSString, stringInit, deviceIDString.c_str());
 
-	odslog("Swizzled Device ID: " << deviceID->description());
+	stdoutlog("Swizzled Device ID: " << deviceID->description());
 
 	return deviceID;
 }
@@ -398,7 +399,7 @@ std::shared_ptr<AnisetteData> AnisetteDataManager::FetchAnisetteData()
 			return;
 		}
 
-		odslog("OTP: " << otp->description() << " MachineID: " << machineID->description());
+		stdoutlog("OTP: " << otp->description() << " MachineID: " << machineID->description());
 
 		/* Device Hardware */
 
@@ -446,7 +447,7 @@ std::shared_ptr<AnisetteData> AnisetteDataManager::FetchAnisetteData()
 			"en_US",
 			"PST");
 
-		odslog(*anisetteData);
+		stdoutlog(*anisetteData);
 	});
 
 	return anisetteData;
@@ -513,7 +514,7 @@ bool AnisetteDataManager::ReprovisionDevice(std::function<void(void)> provisionC
 
 				fs::rename(entry.path(), path);
 
-				odslog("Copying iCloud file from: " << entry.path().string() << " to: " << path.string());
+				stdoutlog("Copying iCloud file from: " << entry.path().string() << " to: " << path.string());
 			}
 		}
 	};
@@ -527,7 +528,7 @@ bool AnisetteDataManager::ReprovisionDevice(std::function<void(void)> provisionC
 	{
 		if (anisetteDictionary == NULL)
 		{
-			odslog("Reprovision Error:" << ((ObjcObject*)error)->description());
+			stderrlog("Reprovision Error:" << ((ObjcObject*)error)->description());
 
 			ObjcObject* localizedDescription = (ObjcObject*)((id(*)(id, SEL))objc_msgSend)(error, sel_registerName("localizedDescription"));
 			if (localizedDescription)
@@ -541,7 +542,7 @@ bool AnisetteDataManager::ReprovisionDevice(std::function<void(void)> provisionC
 			}
 		}
 
-		odslog("Reprovisioned Anisette:" << anisetteDictionary->description());
+		stdoutlog("Reprovisioned Anisette:" << anisetteDictionary->description());
 
 		MiniappBuilderCore::instance()->setReprovisionedDevice(true);
 

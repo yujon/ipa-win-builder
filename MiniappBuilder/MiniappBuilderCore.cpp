@@ -33,7 +33,8 @@
 
 #include <winsparkle.h>
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 using namespace utility;                    // Common utilities like string conversions
 using namespace web;                        // Common features like URIs.
@@ -72,7 +73,7 @@ HKEY OpenRegistryKey()
 
 	if (nError)
 	{
-		odslog("Error finding/creating registry value. " << nError);
+		stderrlog("Error finding/creating registry value. " << nError);
 	}
 
 	return hKey;
@@ -87,7 +88,7 @@ void SetRegistryBoolValue(const char *lpValue, bool data)
 
 	if (nError)
 	{
-		odslog("Error setting registry value. " << nError);
+		stderrlog("Error setting registry value. " << nError);
 	}
 
 	RegCloseKey(rootKey);
@@ -100,7 +101,7 @@ void SetRegistryStringValue(const char* lpValue, std::string string)
 
 	if (nError)
 	{
-		odslog("Error setting registry value. " << nError);
+		stderrlog("Error setting registry value. " << nError);
 	}
 
 	RegCloseKey(rootKey);
@@ -121,7 +122,7 @@ bool GetRegistryBoolValue(const char *lpValue)
 	}
 	else if (nError)
 	{
-		odslog("Could not get registry value. " << nError);
+		stderrlog("Could not get registry value. " << nError);
 	}
 
 	RegCloseKey(rootKey);
@@ -145,7 +146,7 @@ std::string GetRegistryStringValue(const char* lpValue)
 	}
 	else if (nError)
 	{
-		odslog("Could not get registry value. " << nError);
+		stderrlog("Could not get registry value. " << nError);
 	}
 
 	RegCloseKey(rootKey);
@@ -281,7 +282,7 @@ BOOL CALLBACK TwoFactorDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lP
 			wchar_t verificationCode[512];
 			Edit_GetText(verificationCodeTextField, verificationCode, 512);
 
-			odslog("Verification Code:" << verificationCode);
+			stdoutlog("Verification Code:" << verificationCode);
 
 			_verificationCode = StringFromWideString(verificationCode);
 
@@ -332,7 +333,7 @@ static int CALLBACK BrowseFolderCallback(HWND hwnd, UINT uMsg, LPARAM lParam, LP
 	if (uMsg == BFFM_INITIALIZED)
 	{
 		std::string tmp = (const char*)lpData;
-		odslog("Browser Path:" << tmp);
+		stdoutlog("Browser Path:" << tmp);
 		SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
 	}
 
@@ -396,7 +397,7 @@ void MiniappBuilderCore::Start()
 #if SPOOF_MAC
 		if (!this->CheckiCloudDependencies())
 		{
-			odslog("iCloud Not Installed. iCloud must be installed from Apple's website (not the Microsoft Store) in order to use the Miniapp Assistant.");
+			stderrlog("iCloud Not Installed. iCloud must be installed from Apple's website (not the Microsoft Store) in order to use the Miniapp Assistant.");
 		}
 #endif
 	}
@@ -406,16 +407,16 @@ void MiniappBuilderCore::Start()
 	}
 	catch (LocalizedError& error)
 	{
-		odslog("Failed to Start MiniappBuilder: " + error.localizedDescription());
+		stderrlog("Failed to Start MiniappBuilder: " + error.localizedDescription());
 	}
 	catch (std::exception& exception)
 	{
-		odslog("Failed to Start MiniappBuilder", exception.what());
+		stderrlog("Failed to Start MiniappBuilder", exception.what());
 	}
 
 	if (!this->presentedRunningNotification())
 	{
-		odslog("MiniappBuilder will continue to run in the background listening for the Miniapp Assistant.");
+		stderrlog("MiniappBuilder will continue to run in the background listening for the Miniapp Assistant.");
 		this->setPresentedRunningNotification(true);
 	}
 	else
@@ -454,7 +455,7 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApplication(
 				// This appears to happen when iCloud is running simultaneously, and just happens to provision device at same time as MiniappBuilder.
 				AnisetteDataManager::instance()->ResetProvisioning();
 
-				odslog("Registering PC with Apple, This may take a few seconds.");
+				stdoutlog("Registering PC with Apple, This may take a few seconds.");
 
 				// Provisioning device can fail if attempted too soon after previous attempt.
 				// As a hack around this, we wait a bit before trying again.
@@ -477,7 +478,7 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApplication(
 			std::stringstream ss;
 			ss << application->name() << " was successfully installed on " << installDevice->name() << ".";
 
-			odslog("Installation Succeeded:", ss.str());
+			stdoutlog("Installation Succeeded:", ss.str());
 
 			return application;
 		}
@@ -489,7 +490,7 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApplication(
 			}
 			else
 			{
-                odslog(error.localizedDescription());
+                stderrlog(error.localizedDescription());
                 throw;
 			}
 		}
@@ -500,7 +501,7 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApplication(
 				AnisetteDataManager::instance()->ResetProvisioning();
 			}
 
-            odslog(error.localizedDescription());
+            stderrlog(error.localizedDescription());
             throw;
 		}
 		catch (AnisetteError& error)
@@ -510,7 +511,7 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApplication(
 		}
 		catch (std::exception& exception)
 		{
-           odslog("Could not install " + appName + " to " + installDevice->name() + ".");
+           stderrlog("Could not install " + appName + " to " + installDevice->name() + ":" + exception.what());
             throw;
 		}
 	});
@@ -540,20 +541,20 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::_InstallApplication
               *account = *(pair.first);
 			  *session = *(pair.second);
 
-			  odslog("Fetching team...");
+			  stdoutlog("Fetching team...");
 
               return this->FetchTeam(account, session);
           })
     .then([=](std::shared_ptr<Team> tempTeam)
           {
-			odslog("Registering device...");
+			stdoutlog("Registering device...");
 
               *team = *tempTeam;
               return this->RegisterDevice(installDevice, team, session);
           })
     .then([=](std::shared_ptr<Device> tempDevice)
           {
-				odslog("Fetching certificate...");
+				stdoutlog("Fetching certificate...");
 
 				tempDevice->setOSVersion(installDevice->osVersion());
 				*device = *tempDevice;
@@ -564,7 +565,7 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::_InstallApplication
           {
 				*certificate = *tempCertificate;
 
-				odslog("Preparing device...");				
+				stdoutlog("Preparing device...");				
                 return this->PrepareDevice(device).then([=](pplx::task<void> task) {
                     try
                     {
@@ -573,16 +574,16 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::_InstallApplication
                     }
                     catch (Error& error)
                     {
-                        odslog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << error.localizedDescription());
+                        stderrlog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << error.localizedDescription());
                     }
                     catch (std::exception& exception)
                     {
-                        odslog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << exception.what());
+                        stderrlog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << exception.what());
                     }
 
                     if (filepath.has_value())
                     {
-                        odslog("Importing app...");
+                        stdoutlog("Importing app...");
 
                         return pplx::create_task([filepath] {
                             return fs::path(*filepath);
@@ -598,7 +599,7 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::_InstallApplication
               auto appBundlePath = UnzipAppBundle(downloadedAppPath.string(), destinationDirectoryPath.string());
 			  auto app = std::make_shared<Application>(appBundlePath);
 
-			  odslog("Installing " + app->name() + " to " +  device->name());
+			  stdoutlog("Installing " + app->name() + " to " +  device->name());
 			  
               return app;
           })
@@ -797,7 +798,7 @@ pplx::task<std::shared_ptr<Certificate>> MiniappBuilderCore::FetchCertificate(st
 					catch(std::exception &e)
 					{
 						// Ignore cached certificate errors.
-						odslog("Failed to load cached certificate:" << cachedCertificatePath << ". " << e.what())
+						stderrlog("Failed to load cached certificate:" << cachedCertificatePath << ". " << e.what())
 					}
 				}
 
@@ -866,7 +867,7 @@ pplx::task<std::shared_ptr<Certificate>> MiniappBuilderCore::FetchCertificate(st
 									catch (std::exception& e)
 									{
 										// Ignore caching certificate errors.
-										odslog("Failed to cache certificate:" << cachedCertificatePath << ". " << e.what())
+										stderrlog("Failed to cache certificate:" << cachedCertificatePath << ". " << e.what())
 									}
 
                                     return certificate;
@@ -1332,7 +1333,7 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApp(std::sha
 		}
         
 		return DeviceManager::instance()->InstallApp(app->path(), device->identifier(), activeProfiles, [](double progress) {
-			odslog("Installation Progress: " << progress);
+			stdoutlog("Installation Progress: " << progress);
 		})
 		.then([app] {
 			return app;
@@ -1477,7 +1478,7 @@ If you already have iCloud installed, please locate the "Apple" folder that was 
 				return;
 			}
 
-			odslog("Chose Apple folder: " << folderPath);
+			stdoutlog("Chose Apple folder: " << folderPath);
 
 			this->setAppleFolderPath(folderPath);
 		}
@@ -1505,7 +1506,7 @@ If you already have iCloud installed, please locate the "Apple" folder that was 
 			return;
 		}
 
-		odslog("Chose Apple folder: " << folderPath);
+		stdoutlog("Chose Apple folder: " << folderPath);
 
 		this->setAppleFolderPath(folderPath);
 
@@ -1514,7 +1515,7 @@ If you already have iCloud installed, please locate the "Apple" folder that was 
 
 	case AnisetteErrorCode::InvalidiTunesInstallation:
 	{
-		odslog("Invalid iTunes Installation " +error.localizedDescription());
+		stderrlog("Invalid iTunes Installation " +error.localizedDescription());
 		break;
 	}
 	}

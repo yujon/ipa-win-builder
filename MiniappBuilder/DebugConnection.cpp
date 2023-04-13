@@ -4,7 +4,8 @@
 
 #include <WS2tcpip.h>
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 char* bin2hex(const unsigned char* bin, size_t length)
 {
@@ -209,7 +210,7 @@ void DebugConnection::ProcessResponse(std::optional<std::string> rawResponse)
 		char* decodedResponse = NULL;
 		debugserver_decode_string(response.c_str(), response.size(), &decodedResponse);
 		
-		odslog("Response: " << decodedResponse);
+		stdoutlog("Response: " << decodedResponse);
 
 		if (decodedResponse)
 		{
@@ -223,7 +224,7 @@ void DebugConnection::ProcessResponse(std::optional<std::string> rawResponse)
 	{
 		// Thread Information
 
-		odslog("Thread stopped. Details: " << response);
+		stdoutlog("Thread stopped. Details: " << response);
 
 		std::istringstream stream(response.c_str());
 
@@ -285,7 +286,7 @@ void DebugConnection::ProcessResponse(std::optional<std::string> rawResponse)
 	{
 		// Warning
 
-		odslog("WARNING: " << response);
+		stdoutlog("WARNING: " << response);
 		break;
 	}
 	}

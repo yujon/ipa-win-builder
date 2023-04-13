@@ -32,7 +32,8 @@
 extern std::string StringFromWideString(std::wstring wideString);
 extern std::wstring WideStringFromString(std::string string);
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 std::string make_uuid()
 {
@@ -108,29 +109,36 @@ int main(int argc, char* argv[])
 	std::map<std::string, std::wstring> parameters = { {"title", (wchar_t*)L"title text"}, {"message", (wchar_t*)L"message test"} };
 
 	if (argc <= 3) {
-		odslog("Error: the lenght of arguments should more than 3");
+		stderrlog("Error: the lenght of arguments should more than 3");
 		return -1;
 	}
 	std::string appleID = argv[1];
 	std::string password = argv[2];
 	std::string ipaFilepath = argv[3];
+
 	if (appleID.empty()) {
-		odslog("Error: appleID is undefined");
+		stderrlog("Error: appleID is undefined");
 		return -1;
 	}
 	if (password.empty()) {
-		odslog("Error: password is undefined");
+		stderrlog("Error: password is undefined");
 		return -1;
 	}
 	if (ipaFilepath.empty()) {
-		odslog("Error: ipaFilepath is undefined");
+		stderrlog("Error: ipaFilepath is undefined");
 		return -1;
 	}
+	auto devices = DeviceManager::instance()->availableDevices();
+	if (devices.size() == 0) {
+		stderrlog("Error: no connected device");
+		return -1;
+	}
+	std::shared_ptr<Device> selectedDevice = devices[0];
+	stdoutlog("appleID:" + appleID);
+	stdoutlog("ipaPath:" + ipaFilepath);
 
 	MiniappBuilderCore::instance()->Start();
-	auto devices = DeviceManager::instance()->availableDevices();
-	std::shared_ptr<Device> _selectedDevice = devices[0];
-	auto task = MiniappBuilderCore::instance()->InstallApplication(ipaFilepath, _selectedDevice, appleID, password);
+	auto task = MiniappBuilderCore::instance()->InstallApplication(ipaFilepath, selectedDevice, appleID, password);
 
 	try
 	{
@@ -138,15 +146,15 @@ int main(int argc, char* argv[])
 	}
 	catch (Error& error)
 	{
-		odslog("Error: " << error.domain() << " (" << error.code() << ").")
+		stderrlog("Error: " << error.domain() << " (" << error.code() << ").")
 		return -1;
 	}
 	catch (std::exception& exception)
 	{
-		odslog("Exception: " << exception.what());
+		stderrlog("Exception: " << exception.what());
 		return -1;
 	}
 
-	odslog("Finished!");
+	stdoutlog("Finished!");
 
 }

@@ -33,7 +33,8 @@
 
 #define DEVICE_LISTENING_SOCKET 28151
 
-#define odslog(msg) { std::wstringstream ss; ss << msg << std::endl; OutputDebugStringW(ss.str().c_str()); }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 extern std::string StringFromWideString(std::wstring wideString);
 extern std::wstring WideStringFromString(std::string string);
@@ -535,7 +536,7 @@ void DeviceManager::WriteFile(afc_client_t client, std::string filepath, std::st
 	std::replace(destinationPath.begin(), destinationPath.end(), '\\', '/');
 	destinationPath = replace_all(destinationPath, "__colon__", ":");
 
-	odslog("Writing File: " << filepath.c_str() << " to: " << destinationPath.c_str());
+	stdoutlog("Writing File: " << filepath.c_str() << " to: " << destinationPath.c_str());
     
     auto data = readFile(filepath.c_str());
     
@@ -982,12 +983,12 @@ void DeviceManager::InstallProvisioningProfile(std::shared_ptr<ProvisioningProfi
 
 	if (result == MISAGENT_E_SUCCESS)
 	{
-		odslog("Installed profile: " << WideStringFromString(profile->bundleIdentifier()) << " (" << WideStringFromString(profile->uuid()) << ")");
+		stdoutlog("Installed profile: " <<profile->bundleIdentifier() << " (" << profile->uuid() << ")");
 	}
 	else
 	{
 		int statusCode = misagent_get_status_code(mis);
-		odslog("Failed to install provisioning profile: " << WideStringFromString(profile->bundleIdentifier()) << " (" << WideStringFromString(profile->uuid()) << "). Error code: " << statusCode);
+		stdoutlog("Failed to install provisioning profile: " << profile->bundleIdentifier() << " (" << profile->uuid() << "). Error code: " << statusCode);
 
 		switch (statusCode)
 		{
@@ -1026,12 +1027,12 @@ void DeviceManager::RemoveProvisioningProfile(std::shared_ptr<ProvisioningProfil
 	misagent_error_t result = misagent_remove(mis, uuid.c_str());
 	if (result == MISAGENT_E_SUCCESS)
 	{
-		odslog("Removed profile: " << WideStringFromString(profile->bundleIdentifier()) << " (" << WideStringFromString(profile->uuid()) << ")");
+		stdoutlog("Removed profile: " << profile->bundleIdentifier() << " (" << profile->uuid() << ")");
 	}
 	else
 	{
 		int statusCode = misagent_get_status_code(mis);
-		odslog("Failed to remove provisioning profile: " << WideStringFromString(profile->bundleIdentifier()) << " (" << WideStringFromString(profile->uuid()) << "). Error code: " << statusCode);
+		stdoutlog("Failed to remove provisioning profile: " << profile->bundleIdentifier() << " (" << profile->uuid() << "). Error code: " << statusCode);
 
 		switch (statusCode)
 		{
@@ -1674,7 +1675,7 @@ std::vector<std::shared_ptr<Device>> DeviceManager::availableDevices(bool includ
 
         if (lockdownd_get_value(client, NULL, "ProductType", &device_type_plist) != LOCKDOWN_E_SUCCESS)
         {
-            odslog("ERROR: Could not get device type for " << device_name);
+            stdoutlog("ERROR: Could not get device type for " << device_name);
 
             cleanUp();
             continue;
@@ -1698,7 +1699,7 @@ std::vector<std::shared_ptr<Device>> DeviceManager::availableDevices(bool includ
         }
         else
         {
-            odslog("Unknown device type " << device_type_string << " for " << device_name);
+            stdoutlog("Unknown device type " << device_type_string << " for " << device_name);
 
             cleanUp();
             continue;
@@ -1706,7 +1707,7 @@ std::vector<std::shared_ptr<Device>> DeviceManager::availableDevices(bool includ
 
         if (lockdownd_get_value(client, NULL, "ProductVersion", &device_version_plist) != LOCKDOWN_E_SUCCESS)
         {
-            odslog("ERROR: Could not get device type for " << device_name);
+            stdoutlog("ERROR: Could not get device type for " << device_name);
 
             cleanUp();
             continue;
@@ -1820,12 +1821,12 @@ void DeviceManagerUpdateAppDeletionStatus(plist_t command, plist_t status, void*
 
 			if (errorCode != 0 || std::string(errorName) != std::string())
 			{
-				odslog("Error removing app. " << errorCode << " (" << errorName << "). " << errorDescription);
+				stdoutlog("Error removing app. " << errorCode << " (" << errorName << "). " << errorDescription);
 				completionHandler(false, errorCode, errorName, errorDescription);
 			}
 			else
 			{
-				odslog("Finished removing app!");
+				stdoutlog("Finished removing app!");
 				completionHandler(true, 0, errorName, errorDescription);
 			}
 
@@ -1862,7 +1863,7 @@ void DeviceDidChangeConnectionStatus(const idevice_event_t* event, void* user_da
 			return;
 		}
 
-		odslog("Detected device:" << device->name().c_str());
+		stdoutlog("Detected device:" << device->name().c_str());
 
 		DeviceManager::instance()->cachedDevices()[device->identifier()] = device;
 

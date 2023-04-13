@@ -33,7 +33,8 @@ extern std::wstring WideStringFromString(std::string string);
 
 extern bool decompress(const uint8_t* input, size_t input_size, std::vector<uint8_t>& output);
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 //struct ccrng_state* ccDRBGGetRngState(void);
 
@@ -158,13 +159,13 @@ std::optional<std::vector<unsigned char>> ALTDecryptDataGCM(std::vector<unsigned
 
 	if (encryptedData.size() < 35)
 	{
-		odslog("ERROR: Encrypted token too short.");
+		stderrlog("ERROR: Encrypted token too short.");
 		return std::nullopt;
 	}
 
 	if (cc_cmp_safe(3, encryptedData.data(), "XYZ"))
 	{
-		odslog("ERROR: Encrypted token wrong version!");
+		stderrlog("ERROR: Encrypted token wrong version!");
 		return std::nullopt;
 	}
 
@@ -182,7 +183,7 @@ std::optional<std::vector<unsigned char>> ALTDecryptDataGCM(std::vector<unsigned
 
 	if (cc_cmp_safe(16, encryptedData.data() + decrypted_len + 19, tag))
 	{
-		odslog("ERROR: Invalid tag version.");
+		stderrlog("ERROR: Invalid tag version.");
 		return std::nullopt;
 	}
 
@@ -420,7 +421,7 @@ pplx::task<std::pair<std::shared_ptr<Account>, std::shared_ptr<AppleAPISession>>
 				auto M2_node = plist_dict_get_item(plist, "M2");
 				if (M2_node == nullptr)
 				{
-					odslog("ERROR: M2 data not found!");
+					stderrlog("ERROR: M2 data not found!");
 					throw APIError(APIErrorCode::InvalidResponse);
 				}
 
@@ -430,7 +431,7 @@ pplx::task<std::pair<std::shared_ptr<Account>, std::shared_ptr<AppleAPISession>>
 
 				if (!ccsrp_client_verify_session(srp_ctx, (const uint8_t*)M2_bytes))
 				{
-					odslog("ERROR: Failed to verify session.");
+					stderrlog("ERROR: Failed to verify session.");
 					throw APIError(APIErrorCode::AuthenticationHandshakeFailed);
 				}
 
@@ -466,7 +467,7 @@ pplx::task<std::pair<std::shared_ptr<Account>, std::shared_ptr<AppleAPISession>>
 				auto npNode = plist_dict_get_item(plist, "np");
 				if (npNode == nullptr)
 				{
-					odslog("ERROR: Missing np dictionary.");
+					stderrlog("ERROR: Missing np dictionary.");
 					throw APIError(APIErrorCode::InvalidResponse);
 				}
 
@@ -480,7 +481,7 @@ pplx::task<std::pair<std::shared_ptr<Account>, std::shared_ptr<AppleAPISession>>
 				size_t digest_len = di_info->output_size;
 				if (np.size() != digest_len)
 				{
-					odslog("ERROR: Neg proto hash is too short.");
+					stderrlog("ERROR: Neg proto hash is too short.");
 					throw APIError(APIErrorCode::AuthenticationHandshakeFailed);
 				}
 
@@ -491,48 +492,41 @@ pplx::task<std::pair<std::shared_ptr<Account>, std::shared_ptr<AppleAPISession>>
 				unsigned char* hmac_out = (unsigned char*)malloc(digest_len);
 				cchmac(di_info, hmacKey.size(), hmacKey.data(), digest_len, digest, hmac_out);
 
-				odslog("HMAC_OUT:");
 				for (int i = 0; i < digest_len; i++)
 				{
 					char str[8];
 					char byte = ((char*)hmac_out)[i];
 					_itoa(byte, str, 10);
 
-					odslog("Byte:" << str);
 				}
 
-				odslog("NP:");
 				for (int i = 0; i < digest_len; i++)
 				{
 					char str[8];
 					char byte = ((char*)npBytes)[i];
 					_itoa(byte, str, 10);
-
-					odslog("Byte:" << str);
 				}
 
 				/*
 				if (cc_cmp_safe(digest_len, hmac_out, np.data()))
 				{
-					odslog("ERROR: Invalid neg prot hmac.");
+					stderrlog("ERROR: Invalid neg prot hmac.");
 					throw APIError(APIErrorCode::AuthenticationHandshakeFailed);
 				}*/
 
 				auto decryptedData = ALTDecryptDataCBC(srp_ctx, spd);
 				if (decryptedData == ::nullopt)
 				{
-					odslog("ERROR: Could not decrypt login response.");
+					stderrlog("ERROR: Could not decrypt login response.");
 					throw APIError(APIErrorCode::AuthenticationHandshakeFailed);
 				}
-
-				odslog("Data: " << decryptedData->data());
 
 				plist_t decryptedPlist = nullptr;
 				plist_from_xml((const char *)decryptedData->data(), (int)decryptedData->size(), &decryptedPlist);
 
 				if (decryptedPlist == nullptr)
 				{
-					odslog("ERROR: Could not parse decrypted login response plist!");
+					stderrlog("ERROR: Could not parse decrypted login response plist!");
 					throw APIError(APIErrorCode::InvalidResponse);
 				}
 
@@ -541,7 +535,7 @@ pplx::task<std::pair<std::shared_ptr<Account>, std::shared_ptr<AppleAPISession>>
 
 				if (adsidNode == nullptr || idmsTokenNode == nullptr)
 				{
-					odslog("ERROR: adsid and /or idmsToken is nil.");
+					stderrlog("ERROR: adsid and /or idmsToken is nil.");
 					throw APIError(APIErrorCode::InvalidResponse);
 				}
 
@@ -570,7 +564,7 @@ pplx::task<std::pair<std::shared_ptr<Account>, std::shared_ptr<AppleAPISession>>
 
 				if (authType == "trustedDeviceSecondaryAuth")
 				{
-					odslog("Requires trusted device two factor...");
+					stdoutlog("Requires trusted device two factor...");
 
 					if (verificationHandler.has_value())
 					{
@@ -586,7 +580,7 @@ pplx::task<std::pair<std::shared_ptr<Account>, std::shared_ptr<AppleAPISession>>
 				}
 				else if (authType == "secondaryAuth")
 				{
-					odslog("Requires SMS two factor...");
+					stdoutlog("Requires SMS two factor...");
 
 					if (verificationHandler.has_value())
 					{
@@ -607,7 +601,7 @@ pplx::task<std::pair<std::shared_ptr<Account>, std::shared_ptr<AppleAPISession>>
 
 					if (skNode == nullptr || cNode == nullptr)
 					{
-						odslog("ERROR: No ak and /or c data.");
+						stderrlog("ERROR: No ak and /or c data.");
 						throw APIError(APIErrorCode::InvalidResponse);
 					}
 
@@ -716,7 +710,7 @@ pplx::task<std::string> AppleAPI::FetchAuthToken(std::map<std::string, plist_t> 
 
 		if (decryptedToken == ::nullopt)
 		{
-			odslog("ERROR: Failed to decrypt apptoken.");
+			stderrlog("ERROR: Failed to decrypt apptoken.");
 			throw APIError(APIErrorCode::InvalidResponse);
 		}
 
@@ -725,7 +719,7 @@ pplx::task<std::string> AppleAPI::FetchAuthToken(std::map<std::string, plist_t> 
 
 		if (decryptedTokenPlist == nullptr)
 		{
-			odslog("ERROR: Could not parse decrypted apptoken plist.");
+			stderrlog("ERROR: Could not parse decrypted apptoken plist.");
 			throw APIError(APIErrorCode::InvalidResponse);
 		}
 
@@ -750,7 +744,7 @@ pplx::task<std::string> AppleAPI::FetchAuthToken(std::map<std::string, plist_t> 
 		char* token = nullptr;
 		plist_get_string_val(tokenNode, &token);
 
-		odslog("Got token for " << app << "!\nValue : " << token);
+		stdoutlog("Got token for " << app << "!\nValue : " << token);
 
 		return std::string(token);
 	});
@@ -774,7 +768,7 @@ pplx::task<bool> AppleAPI::RequestTrustedDeviceTwoFactorCode(
 			})
 		.then([=](http_response response)
 			{
-				odslog("Received 2FA response status code: " << response.status_code());
+				stdoutlog("Received 2FA response status code: " << response.status_code());
 				return response.extract_vector();
 			})
 				.then([=](std::vector<unsigned char> decompressedData)
@@ -799,7 +793,7 @@ pplx::task<bool> AppleAPI::RequestTrustedDeviceTwoFactorCode(
 					})
 				.then([=](http_response response)
 					{
-						odslog("Received 2FA response status code: " << response.status_code());
+						stdoutlog("Received 2FA response status code: " << response.status_code());
 						return response.extract_vector();
 					})
 				.then([=](std::vector<unsigned char> compressedData)
@@ -897,7 +891,7 @@ pplx::task<bool> AppleAPI::RequestSMSTwoFactorCode(
 			})
 		.then([=](http_response response)
 			{
-				odslog("Received 2FA response status code: " << response.status_code());
+				stdoutlog("Received 2FA response status code: " << response.status_code());
 				return response.extract_vector();
 			})
 		.then([=](std::vector<unsigned char> decompressedData)
@@ -943,7 +937,7 @@ pplx::task<bool> AppleAPI::RequestSMSTwoFactorCode(
 			})
 		.then([=](http_response response)
 			{
-				odslog("Received verify 2FA response status code: " << response.status_code());
+				stdoutlog("Received verify 2FA response status code: " << response.status_code());
 
 				if (response.status_code() != 200 || !response.headers().has(L"X-Apple-PE-Token"))
 				{
@@ -1042,7 +1036,7 @@ pplx::task<plist_t> AppleAPI::SendAuthenticationRequest(std::map<std::string, pl
 			})
 		.then([=](http_response response)
 			{
-				odslog("Received auth response status code: " << response.status_code());
+				stdoutlog("Received auth response status code: " << response.status_code());
 				return response.extract_vector();
 			})
 				.then([=](std::vector<unsigned char> compressedData)

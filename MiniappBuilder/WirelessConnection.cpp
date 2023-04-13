@@ -3,7 +3,8 @@
 #include <WinSock2.h>
 #include <cpprest/json.h>
 
-#define odslog(msg) {  std::cout << msg << std::endl; }
+#define stdoutlog(msg) {  std::cout << msg << std::endl; }
+#define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
 #include "ServerError.hpp"
 
@@ -129,7 +130,7 @@ pplx::task<std::vector<unsigned char>> WirelessConnection::ReceiveData(int size)
 					data.push_back(buffer[i]);
 				}
 
-				odslog("Received bytes: " << data.size() << "(of " << size << ")");
+				stdoutlog("Received bytes: " << data.size() << "(of " << size << ")");
 
 				if (data.size() >= size)
 				{
