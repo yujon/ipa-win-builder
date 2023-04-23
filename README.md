@@ -4,7 +4,7 @@
 
 1. 下载安装[itunes](https://support.apple.com/en-us/HT210384)和[icloud](https://support.apple.com/en-hk/HT204283)
 
-2. 下载MiniAppBuilder并解压
+2. 下载[MiniAppBuilder](https://github.com/yujon/ipa-win-builder/releases/)并解压
 
 3. 将`iphone`手机用数据线连接到电脑上
 
