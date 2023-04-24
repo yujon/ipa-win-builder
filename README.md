@@ -12,8 +12,8 @@
 
 ```sh
 cd MiniappMacBuilder-v1.0.0
-./MiniAppBuilder.exe  {ipaPath}  {your apple account} {your apple password}
-# ./MiniAppBuilder.exe /a/b/demo.ipa xxx xxx
+./MiniAppBuilder.exe {your apple account} {your apple password}  {ipaPath} 
+# ./MiniAppBuilder.exe xxx xxx /a/b/demo.ipa
 
 ```
 
