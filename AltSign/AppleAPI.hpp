@@ -132,7 +132,7 @@ private:
 			}
 			catch (std::exception& exception)
 			{
-				//stdoutlog("Parse exception: " << exception.what());
+				//stderrlog("Parse exception: " << exception.what());
 
 				int64_t resultCode = 0;
 

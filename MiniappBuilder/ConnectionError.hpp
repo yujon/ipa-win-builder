@@ -184,7 +184,6 @@ public:
 		case INSTPROXY_E_PLIST_ERROR: return ConnectionError(ConnectionErrorCode::InvalidResponse, userInfo);
 		case INSTPROXY_E_CONN_FAILED: return ConnectionError(ConnectionErrorCode::Usbmuxd, userInfo);
 		case INSTPROXY_E_RECEIVE_TIMEOUT: return ConnectionError(ConnectionErrorCode::TimedOut, userInfo);
-//      case INSTPROXY_E_DEVICE_OS_VERSION_TOO_LOW: return ConnectionError(ConnectionErrorCode::Unknown, userInfo); // Error message assumes we're installing AltStore
 		default: return ConnectionError(ConnectionErrorCode::Unknown, userInfo);
 		}
 	}

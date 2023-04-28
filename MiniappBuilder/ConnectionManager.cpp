@@ -207,7 +207,7 @@ void ConnectionManager::Listen()
             int port2 = ntohs(((struct sockaddr_in)clientAddress).sin_port);
 			int error = WSAGetLastError();
 
-			stdoutlog("Other Socket:" << other_socket << ". Port: " << port2 << ". Error: " << error);
+			stderrlog("Other Socket:" << other_socket << ". Port: " << port2 << ". Error: " << error);
             
 			std::shared_ptr<ClientConnection> clientConnection(new WirelessConnection(other_socket));
 			this->HandleRequest(clientConnection);

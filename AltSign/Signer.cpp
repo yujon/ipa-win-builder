@@ -190,7 +190,7 @@ std::string CertificatesContent(std::shared_ptr<Certificate> altCertificate)
     return output;
 }
 
-Signer::Signer(std::shared_ptr<Team> team, std::shared_ptr<Certificate> certificate) : _team(team), _certificate(certificate)
+Signer::Signer(std::shared_ptr<Certificate> certificate) : _certificate(certificate)
 {
 }
 
@@ -295,11 +295,11 @@ void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningP
             return entitlements;
         }),
                    ldid::fun([&](const std::string &string) {
-			stdoutlog("Signing: " << string);
+			// stdoutlog("Signing: " << string);
 //            progress.completedUnitCount += 1;
         }),
                    ldid::fun([&](const double signingProgress) {
-			stdoutlog("Signing Progress: " << signingProgress);
+			// stdoutlog("Signing Progress: " << signingProgress);
         }));
         
         // Zip app back up.
@@ -326,11 +326,6 @@ void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningP
         
         throw;
     }
-}
-
-std::shared_ptr<Team> Signer::team() const
-{
-    return _team;
 }
 
 std::shared_ptr<Certificate> Signer::certificate() const

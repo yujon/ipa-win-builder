@@ -130,7 +130,7 @@ pplx::task<std::vector<unsigned char>> WirelessConnection::ReceiveData(int size)
 					data.push_back(buffer[i]);
 				}
 
-				stdoutlog("Received bytes: " << data.size() << "(of " << size << ")");
+				// stdoutlog("Received bytes: " << data.size() << "(of " << size << ")");
 
 				if (data.size() >= size)
 				{

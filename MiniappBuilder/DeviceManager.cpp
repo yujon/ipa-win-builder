@@ -536,7 +536,7 @@ void DeviceManager::WriteFile(afc_client_t client, std::string filepath, std::st
 	std::replace(destinationPath.begin(), destinationPath.end(), '\\', '/');
 	destinationPath = replace_all(destinationPath, "__colon__", ":");
 
-	stdoutlog("Writing File: " << filepath.c_str() << " to: " << destinationPath.c_str());
+	// stdoutlog("Writing File: " << filepath.c_str() << " to: " << destinationPath.c_str());
     
     auto data = readFile(filepath.c_str());
     

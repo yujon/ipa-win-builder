@@ -61,6 +61,7 @@ const char* APPLE_FOLDER_KEY = "AppleFolder";
 
 std::string _verificationCode;
 
+
 HKEY OpenRegistryKey()
 {
 	HKEY hKey;
@@ -434,18 +435,32 @@ void MiniappBuilderCore::Stop()
 }
 
 
-pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApplication(std::optional<std::string> filepath, std::shared_ptr<Device> installDevice, std::string appleID, std::string password)
+pplx::task<void> MiniappBuilderCore::InstallApplication(std::string filepath, std::shared_ptr<Device> installDevice, std::optional<std::set<std::string>> activeProfiles)
 {
-    auto appName =fs::path(*filepath).filename().string();
-
-	return this->_InstallApplication(filepath, installDevice, appleID, password)
-	.then([=](pplx::task<std::shared_ptr<Application>> task) -> pplx::task<std::shared_ptr<Application>> {
+    auto appName =fs::path(filepath).filename().string();
+	stdoutlog("Install the app... ");
+	return DeviceManager::instance()->InstallApp(filepath, installDevice->identifier(), activeProfiles, [](double progress) {
+		stdoutlog("Installation Progress: " << progress);
+	})
+	.then([=](pplx::task<void> task) -> void {
 		try
 		{
-			auto application = task.get();
-			return pplx::create_task([application]() { 
-				return application;
-			});
+			task.get();
+			std::stringstream ss;
+			ss << "the ipa was successfully installed on " << installDevice->name() << ".";
+			stdoutlog("Installation Succeeded:", ss.str());
+		}
+		catch (InstallError& error)
+		{
+			if ((InstallErrorCode)error.code() == InstallErrorCode::Cancelled)
+			{
+				// Ignore
+			}
+			else
+			{
+                // stderrlog(error.localizedDescription());
+                throw;
+			}
 		}
 		catch (APIError& error)
 		{
@@ -462,46 +477,15 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApplication(
 				// 10-11 seconds appears to be too short, so wait for 12 seconds instead.
 				Sleep(12000);
 
-				return this->_InstallApplication(filepath, installDevice, appleID, password);
+				this->InstallApplication(filepath, installDevice, activeProfiles);
+				return;
 			}
-			else
-			{
-				throw;
-			}
-		}
-	})
-	.then([=](pplx::task<std::shared_ptr<Application>> task) -> std::shared_ptr<Application> {
-		try
-		{
-			auto application = task.get();
-
-			std::stringstream ss;
-			ss << application->name() << " was successfully installed on " << installDevice->name() << ".";
-
-			stdoutlog("Installation Succeeded:", ss.str());
-
-			return application;
-		}
-		catch (InstallError& error)
-		{
-			if ((InstallErrorCode)error.code() == InstallErrorCode::Cancelled)
-			{
-				// Ignore
-			}
-			else
-			{
-                stderrlog(error.localizedDescription());
-                throw;
-			}
-		}
-		catch (APIError& error)
-		{
-			if ((APIErrorCode)error.code() == APIErrorCode::InvalidAnisetteData)
+			else if ((APIErrorCode)error.code() == APIErrorCode::InvalidAnisetteData)
 			{
 				AnisetteDataManager::instance()->ResetProvisioning();
 			}
 
-            stderrlog(error.localizedDescription());
+            // stderrlog(error.localizedDescription());
             throw;
 		}
 		catch (AnisetteError& error)
@@ -509,15 +493,18 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApplication(
 			this->HandleAnisetteError(error);
             throw;
 		}
+		catch (LocalizedError& error)
+		{
+            throw;
+		}
 		catch (std::exception& exception)
 		{
-           stderrlog("Could not install " + appName + " to " + installDevice->name() + ":" + exception.what());
-            throw;
+			throw;
 		}
 	});
 }
 
-pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::_InstallApplication(std::optional<std::string> filepath, std::shared_ptr<Device> installDevice, std::string appleID, std::string password)
+pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, std::shared_ptr<Device> installDevice,std::string appleID, std::string password, std::string bundleId)
 {
     fs::path destinationDirectoryPath(temporary_directory());
     destinationDirectoryPath.append(make_uuid());
@@ -528,8 +515,6 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::_InstallApplication
 	auto device = std::make_shared<Device>();
 	auto appID = std::make_shared<AppID>();
 	auto certificate = std::make_shared<Certificate>();
-	auto profile = std::make_shared<ProvisioningProfile>();
-
 	auto session = std::make_shared<AppleAPISession>();
 
 	return pplx::create_task([=]() {
@@ -581,48 +566,37 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::_InstallApplication
                         stderrlog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << exception.what());
                     }
 
-                    if (filepath.has_value())
-                    {
-                        stdoutlog("Importing app...");
-
-                        return pplx::create_task([filepath] {
-                            return fs::path(*filepath);
-                        });
-                    }
+					return pplx::create_task([ipapath] {
+						return fs::path(ipapath);
+						});
                 });
           })
-    .then([=](fs::path downloadedAppPath)
+    .then([=](fs::path appFilePath)
           {
-
               fs::create_directory(destinationDirectoryPath);
-              
-              auto appBundlePath = UnzipAppBundle(downloadedAppPath.string(), destinationDirectoryPath.string());
-			  auto app = std::make_shared<Application>(appBundlePath);
+              auto appBundlePath = UnzipAppBundle(appFilePath.string(), destinationDirectoryPath.string());
 
-			  stdoutlog("Installing " + app->name() + " to " +  device->name());
-			  
+			  auto app = std::make_shared<Application>(appBundlePath);
               return app;
           })
     .then([=](std::shared_ptr<Application> tempApp)
           {
               *app = *tempApp;
-			  return this->PrepareAllProvisioningProfiles(app, device, team, session);
+			  return this->PrepareAllProvisioningProfiles(app, device, team, bundleId, session);
           })
-    .then([=](std::map<std::string, std::shared_ptr<ProvisioningProfile>> profiles)
-          {
-              return this->InstallApp(app, device, team, certificate, profiles);
-          })
-    .then([=](pplx::task<std::shared_ptr<Application>> task)
-          {
-			if (fs::exists(destinationDirectoryPath))
-			{
-				fs::remove_all(destinationDirectoryPath);
-			}     
-
+   .then([=](std::map<std::string, std::shared_ptr<ProvisioningProfile>> profiles)
+         {
+             return this->SignCore(app, certificate, profiles);
+         })
+   .then([=](pplx::task<std::optional<std::set<std::string>>> task)
+          { 
 			try
 			{
-				auto application = task.get();
-				return application;
+				auto activeProfiles = task.get();
+				SignResult result;
+				result.application = *app.get();
+				result.activeProfiles = activeProfiles;
+				return result;
 			}
 			catch (LocalizedError& error)
 			{
@@ -642,7 +616,77 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::_InstallApplication
 					throw;
 				}
 			}
-         });
+        });
+}
+
+
+pplx::task<SignResult> MiniappBuilderCore::SignWithCertificate(std::string ipapath, std::string certificatePath, std::optional<std::string> certificatePassword,std::string profilePath)
+{
+	fs::path destinationDirectoryPath(temporary_directory());
+	destinationDirectoryPath.append(make_uuid());
+	auto app = std::make_shared<Application>();
+
+	return pplx::create_task([=]() {
+		try
+		{
+			auto appBundlePath = UnzipAppBundle(ipapath, destinationDirectoryPath.string());
+			auto tempApp = std::make_shared<Application>(appBundlePath);
+			*app = *tempApp;
+
+			auto data = readFile(certificatePath.c_str());
+			std::shared_ptr<Certificate> certificate;
+			if (certificatePassword.has_value()) {
+				certificate = std::make_shared<Certificate>(data, certificatePassword.value());
+			} else {
+				certificate = std::make_shared<Certificate>(data);
+			}
+
+			// Manually set machineIdentifier so we can encrypt + embed certificate if needed.
+			certificate->setMachineIdentifier(certificatePassword);
+			auto profile = std::make_shared<ProvisioningProfile>(profilePath);
+			std::map<std::string, std::shared_ptr<ProvisioningProfile>> profiles; 
+			profiles[tempApp->bundleIdentifier()] = profile;
+			return this->SignCore(tempApp, certificate, profiles);
+		}
+		catch(std::exception &e)
+		{
+			// Ignore cached certificate errors.
+			stderrlog("Failed to load cached certificate:" << certificatePath << ". " << e.what())
+		}
+	}).then([=](pplx::task<std::optional<std::set<std::string>>> task)
+          {
+			// if (fs::exists(destinationDirectoryPath))
+			// {
+			// 	fs::remove_all(destinationDirectoryPath);
+			// }     
+			try
+			{
+				auto activeProfiles = task.get();
+				SignResult result;
+				result.application = *app.get();
+				result.activeProfiles = activeProfiles;
+				return result;
+			}
+			catch (LocalizedError& error)
+			{
+				if (error.code() == -22421)
+				{
+					// Don't know what API call returns this error code, so assume any LocalizedError with -22421 error code
+					// means invalid anisette data, then throw the correct APIError.
+					throw APIError(APIErrorCode::InvalidAnisetteData);
+				}
+				else if (error.code() == -29004)
+				{
+					// Same with -29004, "Environment Mismatch"
+					throw APIError(APIErrorCode::InvalidAnisetteData);
+				}
+				else
+				{
+					throw;
+				}
+			}
+        });
+
 }
 
 pplx::task<void> MiniappBuilderCore::PrepareDevice(std::shared_ptr<Device> device)
@@ -764,11 +808,11 @@ pplx::task<std::shared_ptr<Certificate>> MiniappBuilderCore::FetchCertificate(st
 					continue;
 				}
 
-				std::string prefix("AltStore");
+				std::string prefix("MiniAppBuilder");
 
 				if (certificate->machineName()->size() < prefix.size())
 				{
-					// Machine name doesn't begin with "AltStore", so ignore.
+					// Machine name doesn't begin with "MiniAppBuilder", so ignore.
 					continue;
 				}
 				else
@@ -776,7 +820,7 @@ pplx::task<std::shared_ptr<Certificate>> MiniappBuilderCore::FetchCertificate(st
 					auto result = std::mismatch(prefix.begin(), prefix.end(), certificate->machineName()->begin());
 					if (result.first != prefix.end())
 					{
-						// Machine name doesn't begin with "AltStore", so ignore.
+						// Machine name doesn't begin with "MiniAppBuilder", so ignore.
 						continue;
 					}
 				}
@@ -807,17 +851,16 @@ pplx::task<std::shared_ptr<Certificate>> MiniappBuilderCore::FetchCertificate(st
 				break;
 			}
 
-              if (certificates.size() != 0)
+              if (preferredCertificate != nullptr)
               {
-                  auto certificate = (preferredCertificate != nullptr) ? preferredCertificate : certificates[0];
-                  return AppleAPI::getInstance()->RevokeCertificate(certificate, team, session).then([this, team, session](bool success)
+                  return AppleAPI::getInstance()->RevokeCertificate(preferredCertificate, team, session).then([this, team, session](bool success)
                                                                                             {
                                                                                                 return this->FetchCertificate(team, session);
                                                                                             });
               }
               else
               {
-                  std::string machineName = "AltStore";
+                  std::string machineName = "MiniAppBuilder";
                   
                   return AppleAPI::getInstance()->AddCertificate(machineName, team, session)
 					  .then([team, session, cachedCertificatePath](std::shared_ptr<Certificate> addedCertificate)
@@ -883,9 +926,10 @@ pplx::task<std::map<std::string, std::shared_ptr<ProvisioningProfile>>> MiniappB
 	std::shared_ptr<Application> application,
 	std::shared_ptr<Device> device,
 	std::shared_ptr<Team> team,
+	std::string bundleId,
 	std::shared_ptr<AppleAPISession> session)
 {
-	return this->PrepareProvisioningProfile(application, std::nullopt, device, team, session)
+	return this->PrepareProvisioningProfile(application, std::nullopt, device, team, bundleId, session)
 	.then([=](std::shared_ptr<ProvisioningProfile> profile) {
 		std::vector<pplx::task<std::pair<std::string, std::shared_ptr<ProvisioningProfile>>>> tasks;
 
@@ -896,7 +940,7 @@ pplx::task<std::map<std::string, std::shared_ptr<ProvisioningProfile>>> MiniappB
 
 		for (auto appExtension : application->appExtensions())
 		{
-			auto task = this->PrepareProvisioningProfile(appExtension, application, device, team, session)
+			auto task = this->PrepareProvisioningProfile(appExtension, application, device, team, bundleId, session)
 			.then([appExtension](std::shared_ptr<ProvisioningProfile> profile) {
 				return std::make_pair(appExtension->bundleIdentifier(), profile);
 			});
@@ -932,6 +976,7 @@ pplx::task<std::shared_ptr<ProvisioningProfile>> MiniappBuilderCore::PrepareProv
 	std::optional<std::shared_ptr<Application>> parentApp,
 	std::shared_ptr<Device> device,
 	std::shared_ptr<Team> team,
+	std::string bundleId,
 	std::shared_ptr<AppleAPISession> session)
 {
 	std::string preferredName;
@@ -948,8 +993,15 @@ pplx::task<std::shared_ptr<ProvisioningProfile>> MiniappBuilderCore::PrepareProv
 		preferredName = app->name();
 	}
 
-	std::string updatedParentBundleID = parentBundleID + "." + team->identifier();
-
+	std::string updatedParentBundleID;
+	if (bundleId == "same") {
+		updatedParentBundleID = parentBundleID;
+	} else if (bundleId == "auto") {
+		updatedParentBundleID = parentBundleID + "." + team->identifier();
+	} else {
+		updatedParentBundleID = bundleId;
+	}
+	
 	std::string bundleID = std::regex_replace(app->bundleIdentifier(), std::regex(parentBundleID), updatedParentBundleID);
 
 	return this->RegisterAppID(preferredName, bundleID, team, session)
@@ -1143,7 +1195,7 @@ pplx::task<std::shared_ptr<AppID>> MiniappBuilderCore::UpdateAppIDAppGroups(std:
 				}
 				else
 				{
-					std::string name = std::regex_replace("AltStore " + groupIdentifier, std::regex("\\."), " ");
+					std::string name = std::regex_replace("MiniAppBuilder " + groupIdentifier, std::regex("\\."), " ");
 
 					auto task = AppleAPI::getInstance()->AddAppGroup(name, adjustedGroupIdentifier, team, session);
 					tasks.push_back(task);
@@ -1216,9 +1268,7 @@ pplx::task<std::shared_ptr<ProvisioningProfile>> MiniappBuilderCore::FetchProvis
     return AppleAPI::getInstance()->FetchProvisioningProfile(appID, device->type(), team, session);
 }
 
-pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApp(std::shared_ptr<Application> app,
-                            std::shared_ptr<Device> device,
-                            std::shared_ptr<Team> team,
+pplx::task<std::optional<std::set<std::string>>> MiniappBuilderCore::SignCore(std::shared_ptr<Application> app,
                             std::shared_ptr<Certificate> certificate,
                             std::map<std::string, std::shared_ptr<ProvisioningProfile>> profilesByBundleID)
 {
@@ -1261,7 +1311,9 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApp(std::sha
 		fout.close();
 	};
 
-    return pplx::task<std::shared_ptr<Application>>([=]() {
+    return pplx::task<std::optional<std::set<std::string>>>([=]() {
+
+		stdoutlog("Signing the app...");
         fs::path infoPlistPath(app->path());
         infoPlistPath.append("Info.plist");
         
@@ -1275,39 +1327,6 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApp(std::sha
         }
         
 		plist_t additionalValues = plist_new_dict();
-
-		std::string openAppURLScheme = "altstore-" + app->bundleIdentifier();
-
-		plist_t allURLSchemes = plist_dict_get_item(plist, "CFBundleURLTypes");
-		if (allURLSchemes == nullptr)
-		{
-			allURLSchemes = plist_new_array();
-		}
-		else
-		{
-			allURLSchemes = plist_copy(allURLSchemes);
-		}
-
-		plist_t URLScheme = plist_new_dict();
-		plist_dict_set_item(URLScheme, "CFBundleTypeRole", plist_new_string("Editor"));
-		plist_dict_set_item(URLScheme, "CFBundleURLName", plist_new_string(app->bundleIdentifier().c_str()));
-
-		plist_t schemesNode = plist_new_array();
-		plist_array_append_item(schemesNode, plist_new_string(openAppURLScheme.c_str()));
-		plist_dict_set_item(URLScheme, "CFBundleURLSchemes", schemesNode);
-
-		plist_array_append_item(allURLSchemes, URLScheme);
-		plist_dict_set_item(additionalValues, "CFBundleURLTypes", allURLSchemes);
-
-		if (plist_dict_get_item(plist, "ALTDeviceID") != NULL)
-        {
-            // There is an ALTDeviceID entry, so assume the app is using AltKit and replace it with the device's UDID.
-            plist_dict_set_item(additionalValues, "ALTDeviceID", plist_new_string(device->identifier().c_str()));
-
-			auto serverID = this->serverID();
-			plist_dict_set_item(additionalValues, "ALTServerID", plist_new_string(serverID.c_str()));
-        }
-
 		prepareInfoPlist(app, additionalValues);
 
 		for (auto appExtension : app->appExtensions())
@@ -1323,21 +1342,10 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::InstallApp(std::sha
 			profileIdentifiers.insert(pair.second->bundleIdentifier());
 		}
         
-        Signer signer(team, certificate);
+        Signer signer(certificate);
         signer.SignApp(app->path(), profiles);
-
-		std::optional<std::set<std::string>> activeProfiles = std::nullopt;
-		if (team->type() == Team::Type::Free)
-		{
-			activeProfiles = profileIdentifiers;
-		}
-        
-		return DeviceManager::instance()->InstallApp(app->path(), device->identifier(), activeProfiles, [](double progress) {
-			stdoutlog("Installation Progress: " << progress);
-		})
-		.then([app] {
-			return app;
-		});
+		        
+		return profileIdentifiers;
     });
 }
 
