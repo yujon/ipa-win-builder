@@ -564,22 +564,21 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::_InstallApplication
     .then([=](std::shared_ptr<Certificate> tempCertificate)
           {
 				*certificate = *tempCertificate;
-
-				stdoutlog("Preparing device...");				
-                return this->PrepareDevice(device).then([=](pplx::task<void> task) {
-                    try
-                    {
-                        // Don't rethrow error, and instead continue installing app even if we couldn't install Developer disk image.
-                        task.get();
-                    }
-                    catch (Error& error)
-                    {
-                        stderrlog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << error.localizedDescription());
-                    }
-                    catch (std::exception& exception)
-                    {
-                        stderrlog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << exception.what());
-                    }
+				// stdoutlog("Preparing device...");				
+                // return this->PrepareDevice(device).then([=](pplx::task<void> task) {
+                //     try
+                //     {
+                //         // Don't rethrow error, and instead continue installing app even if we couldn't install Developer disk image.
+                //         task.get();
+                //     }
+                //     catch (Error& error)
+                //     {
+                //         stderrlog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << error.localizedDescription());
+                //     }
+                //     catch (std::exception& exception)
+                //     {
+                //         stderrlog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << exception.what());
+                //     }
 
                     if (filepath.has_value())
                     {
@@ -589,7 +588,7 @@ pplx::task<std::shared_ptr<Application>> MiniappBuilderCore::_InstallApplication
                             return fs::path(*filepath);
                         });
                     }
-                });
+                // });
           })
     .then([=](fs::path downloadedAppPath)
           {
