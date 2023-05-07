@@ -9,7 +9,7 @@
 #pragma once
 
 #include <string>
-
+#include <set>
 #include "Account.hpp"
 #include "AppID.hpp"
 #include "Application.hpp"
@@ -40,6 +40,12 @@ namespace fs = std::filesystem;
 namespace fs = boost::filesystem;
 #endif
 
+struct SignResult {
+    Application application;
+    std::optional<std::set<std::string>> activeProfiles;
+
+};
+
 class MiniappBuilderCore
 {
 public:
@@ -49,7 +55,13 @@ public:
 	void Stop();
 	void CheckForUpdates();
     
-	pplx::task<std::shared_ptr<Application>> InstallApplication(std::optional<std::string> filepath, std::shared_ptr<Device> device, std::string appleID, std::string password);
+	pplx::task<void> InstallApplication(std::string filepath, std::shared_ptr<Device> installDevice, std::optional<std::set<std::string>> activeProfiles);
+	
+	pplx::task<SignResult> SignWithAppleId(std::string filepath, std::shared_ptr<Device> installDevice, std::string appleID, std::string password, std::string bundleId);
+	pplx::task<SignResult> SignWithCertificate(std::string filepath, std::string certificatePath, std::optional<std::string> certificatePassword,std::string profilePath);
+
+
+	
 	pplx::task<void> PrepareDevice(std::shared_ptr<Device> device);
 
 	bool automaticallyLaunchAtLogin() const;
@@ -77,8 +89,6 @@ private:
 	~MiniappBuilderCore();
 
 	static MiniappBuilderCore *_instance;
-
-	pplx::task<std::shared_ptr<Application>> _InstallApplication(std::optional<std::string> filepath, std::shared_ptr<Device> installDevice, std::string appleID, std::string password);
 
 	bool CheckDependencies();
 	bool CheckiCloudDependencies();
@@ -110,12 +120,14 @@ private:
 		std::shared_ptr<Application> application,
 		std::shared_ptr<Device> device,
 		std::shared_ptr<Team> team,
+		std::string bundleId,
 		std::shared_ptr<AppleAPISession> session);
 	pplx::task<std::shared_ptr<ProvisioningProfile>> PrepareProvisioningProfile(
 		std::shared_ptr<Application> application,
 		std::optional<std::shared_ptr<Application>> parentApp,
 		std::shared_ptr<Device> device,
 		std::shared_ptr<Team> team,
+	std::string bundleId,
 		std::shared_ptr<AppleAPISession> session);
     pplx::task<std::shared_ptr<AppID>> RegisterAppID(std::string appName, std::string identifier, std::shared_ptr<Team> team, std::shared_ptr<AppleAPISession> session);
 	pplx::task<std::shared_ptr<AppID>> UpdateAppIDFeatures(std::shared_ptr<AppID> appID, std::shared_ptr<Application> app, std::shared_ptr<Team> team, std::shared_ptr<AppleAPISession> session);
@@ -123,9 +135,7 @@ private:
     pplx::task<std::shared_ptr<Device>> RegisterDevice(std::shared_ptr<Device> device, std::shared_ptr<Team> team, std::shared_ptr<AppleAPISession> session);
     pplx::task<std::shared_ptr<ProvisioningProfile>> FetchProvisioningProfile(std::shared_ptr<AppID> appID, std::shared_ptr<Device> device, std::shared_ptr<Team> team, std::shared_ptr<AppleAPISession> session);
     
-	pplx::task<std::shared_ptr<Application>> InstallApp(std::shared_ptr<Application> app,
-		std::shared_ptr<Device> device,
-		std::shared_ptr<Team> team,
+	pplx::task<std::optional<std::set<std::string>>> SignCore(std::shared_ptr<Application> app,
 		std::shared_ptr<Certificate> certificate,
-		std::map<std::string, std::shared_ptr<ProvisioningProfile>> profiles);
+		std::map<std::string, std::shared_ptr<ProvisioningProfile>> profilesByBundleID);
 };

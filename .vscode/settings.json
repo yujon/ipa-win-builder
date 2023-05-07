@@ -88,6 +88,7 @@
         "shared_mutex": "cpp",
         "source_location": "cpp",
         "typeindex": "cpp",
-        "cwctype": "cpp"
+        "cwctype": "cpp",
+        "strstream": "cpp"
     }
 }

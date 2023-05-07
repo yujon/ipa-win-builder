@@ -171,7 +171,7 @@ public:
             return "Make sure you have trusted this device with your computer and WiFi sync is enabled.";
 
         case ServerErrorCode::MaximumFreeAppLimitReached:
-            return "Please deactivate a sideloaded app with AltStore in order to install another app. If you're running iOS 13.5 or later, make sure 'Offload Unused Apps' is disabled in Settings > iTunes & App Stores, then install or delete all offloaded apps to prevent them from erroneously counting towards this limit.";
+            return "Please deactivate a sideloaded app with MiniAppBuilder in order to install another app. If you're running iOS 13.5 or later, make sure 'Offload Unused Apps' is disabled in Settings > iTunes & App Stores, then install or delete all offloaded apps to prevent them from erroneously counting towards this limit.";
 
         case ServerErrorCode::InvalidAnisetteData:
             return "Please download the latest versions of iTunes and iCloud directly from Apple, and not from the Microsoft Store.";

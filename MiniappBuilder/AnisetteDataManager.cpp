@@ -399,7 +399,7 @@ std::shared_ptr<AnisetteData> AnisetteDataManager::FetchAnisetteData()
 			return;
 		}
 
-		stdoutlog("OTP: " << otp->description() << " MachineID: " << machineID->description());
+		// stdoutlog("OTP: " << otp->description() << " MachineID: " << machineID->description());
 
 		/* Device Hardware */
 
@@ -447,7 +447,7 @@ std::shared_ptr<AnisetteData> AnisetteDataManager::FetchAnisetteData()
 			"en_US",
 			"PST");
 
-		stdoutlog(*anisetteData);
+		// stdoutlog(*anisetteData);
 	});
 
 	return anisetteData;

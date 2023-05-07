@@ -225,19 +225,7 @@ std::string UnzipAppBundle(std::string ipaPath, std::string outputDirectory)
         auto appBundlePath = payloadDirectoryPath;
         appBundlePath.append(filename);
         
-        auto outputPath = outputDirectory;
-        outputPath.append(filename);
-        
-        if (fs::exists(outputPath))
-        {
-			fs::remove(outputPath);
-        }
-        
-		fs::rename(appBundlePath, outputPath);
-        
-        fs::remove_all(payloadDirectoryPath);
-        
-        return outputPath;
+        return appBundlePath.string();
     }
     
     throw SignError(SignError(SignErrorCode::MissingAppBundle));
