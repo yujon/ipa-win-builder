@@ -406,7 +406,7 @@ public:
                 return "An unknown error occured while writing to disk.";
 
 			case ArchiveErrorCode::NoSuchFile:
-                return "The app could not be found.";
+                return "The app file not be found.";
 
             case ArchiveErrorCode::CorruptFile:
                 return "The app is corrupted.";

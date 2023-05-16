@@ -1502,7 +1502,7 @@ pplx::task<std::vector<InstalledApp>> DeviceManager::FetchInstalledApps(std::sha
 		for (int i = 0; i < plist_array_get_size(plist); i++)
 		{
 			auto appPlist = plist_array_get_item(plist, i);
-			if (plist_dict_get_item(appPlist, "ALTBundleIdentifier") == NULL)
+			if (plist_dict_get_item(appPlist, "MiniAppBundleIdentifier") == NULL)
 			{
 				continue;
 			}

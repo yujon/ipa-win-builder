@@ -113,6 +113,19 @@ namespace fs = std::filesystem;
 
 extern std::string make_uuid();
 
+std::string entitlementsToXMLKeyValue(const std::unordered_map<std::string, std::string>& entitlements) {
+  std::stringstream xml;
+  for (const auto& [key, value] : entitlements) {
+    xml << "<key>" << key << "</key>\n";
+    if (value == "true" || value == "false") {
+      xml << (value == "true" ? "<true />\n" : "<false />\n");
+    } else {
+        xml << "<string>" << value << "</string>\n";
+    }
+  }
+  return xml.str();
+}
+
 #define stdoutlog(msg) {  std::cout << msg << std::endl; }
 #define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
@@ -199,7 +212,7 @@ Signer::~Signer()
 	int i = 0;
 }
 
-void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningProfile>> profiles)
+void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningProfile>> profiles, std::unordered_map<std::string, std::string> customEntitlements)
 {   
     fs::path appPath = fs::path(path);
 
@@ -243,7 +256,7 @@ void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningP
             return nullptr;
         };
         
-        auto prepareApp = [&profileForApp, &entitlementsByFilepath](Application &app)
+        auto prepareApp = [&profileForApp, &entitlementsByFilepath, &customEntitlements](Application &app)
         {
             auto profile = profileForApp(app);
             if (profile == nullptr)
@@ -262,8 +275,19 @@ void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningP
             char *entitlementsString = nullptr;
             uint32_t entitlementsSize = 0;
             plist_to_xml(entitlements, &entitlementsString, &entitlementsSize);
-            
-            entitlementsByFilepath[app.path()] = entitlementsString;
+
+            if (!customEntitlements.empty()) {
+                std::string customEntitlementsXml = entitlementsToXMLKeyValue(customEntitlements);
+                std::string oldEntitlementsString(entitlementsString);
+                size_t pos = oldEntitlementsString.rfind("</dict>");
+                if (pos != std::string::npos) {
+                    oldEntitlementsString.insert(pos, customEntitlementsXml);
+                }
+                entitlementsByFilepath[app.path()] = oldEntitlementsString.c_str();
+            }
+            else {
+                entitlementsByFilepath[app.path()] = entitlementsString;
+            }
         };
         
         Application app(appBundlePath.string());
@@ -314,7 +338,6 @@ void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningP
             
             fs::rename(*ipaPath, resignedPath);
         }
-
 		return;
     }
     catch (std::exception& e)

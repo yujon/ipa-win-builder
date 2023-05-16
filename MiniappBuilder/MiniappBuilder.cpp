@@ -193,11 +193,32 @@ BOOL CALLBACK LoginDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam
 	return TRUE;
 }
 
+std::unordered_map<std::string, std::string> queryStringToDictionary(const std::string& queryString) {
+	std::unordered_map<std::string, std::string> dict;
+	std::vector<std::string> pairs;
+	size_t start = 0;
+	size_t end = 0;
+	while (end != std::string::npos) {
+		end = queryString.find('&', start);
+		pairs.push_back(queryString.substr(start, end - start));
+		start = end + 1;
+	}
+	for (const auto& pair : pairs) {
+		size_t pos = pair.find('=');
+		if (pos != std::string::npos) {
+			std::string key = pair.substr(0, pos);
+			std::string value = pair.substr(pos + 1);
+			dict[key] = value;
+		}
+	}
+	return dict;
+}
+
 pplx::task<void> signCallback(SignResult signResult, std::shared_ptr<Device> selectedDevice, std::string outputDir,  bool install) {
 	Application app = signResult.application;
 	fs::path appBundlePath = app.path();
 	if (!outputDir.empty()) {
-		std::string ipaPath = ZipAppBundle(app.path());
+		std::string ipaPath = ZipAppBundle(appBundlePath.string());
 		fs::path src_path(ipaPath);
 		fs::path dist_path(outputDir);
 
@@ -233,6 +254,7 @@ int main(int argc, char* argv[])
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help", "produce help message")
+		("action", po::value<std::string>()->default_value("getDevices"), "sign|getDevices")
 		("ipa", po::value<std::string>()->default_value(""), "ipa path")
 		("type", po::value<std::string>()->default_value("appleId"), "apple sign type: appleId or certificate")
 		("appleId", po::value<std::string>()->default_value(""), "apple ID")
@@ -240,6 +262,7 @@ int main(int argc, char* argv[])
 		("deviceId", po::value<std::string>()->default_value(""), "device udid")
 		("deviceName", po::value<std::string>()->default_value("your phone"), "device name")
 		("bundleId", po::value<std::string>()->default_value("same"), "the bundleId, same|auto|xx.xx.xx(specified bundleId)")
+		("entitlements", po::value<std::string>()->default_value(""), "the emtitlement, A=xxx&B=xxx")
 		("certificatePath", po::value<std::string>()->default_value(""), "certificate path")
 		("certificatePassword", po::value<std::string>()->default_value(""), "certificate password")
 		("profilePath", po::value<std::string>()->default_value(""), "profile path")
@@ -255,6 +278,8 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	std::string action = vm["action"].as<std::string>();
+
 	std::string ipaFilepath = vm["ipa"].as<std::string>();
 	std::string signType = vm["type"].as<std::string>();
 
@@ -268,8 +293,27 @@ int main(int argc, char* argv[])
 	std::string certificatePassword = vm["certificatePassword"].as<std::string>();
 	std::string profilePath = vm["profilePath"].as<std::string>();
 
+	std::string entitlementsStr = vm["entitlements"].as<std::string>();
+
 	std::string outputDir = vm["output"].as<std::string>();
 	bool install = vm["install"].as<bool>();
+
+	if (action == "getDevices") {
+		auto devices = DeviceManager::instance()->availableDevices();
+		if (devices.size() == 0) {
+			return 0;
+		}
+		for (std::shared_ptr<Device> device: devices)
+		{
+			if (device->type() != Device::Type::iPhone) {
+				continue;
+			}
+			std::string versionString = device->osVersion().stringValue();
+			std::string result = "iphone|" + device->name() + "|" + versionString + "|" + device->identifier();
+			stdoutlog(result);
+		}
+		return 0;
+	}
 
 	if (ipaFilepath.empty()) {
 		stderrlog("Error: ipaFilepath is undefined");
@@ -328,16 +372,19 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	// entitlements
+	std::unordered_map<std::string, std::string> entitlements = queryStringToDictionary(entitlementsStr);
+
 
 	pplx::task<void> task;
 	MiniappBuilderCore::instance()->Start();
 	if (signType == "appleId") {
-		task = MiniappBuilderCore::instance()->SignWithAppleId(ipaFilepath, selectedDevice, appleID, password, bundleId)
+		task = MiniappBuilderCore::instance()->SignWithAppleId(ipaFilepath, selectedDevice, appleID, password, bundleId, entitlements)
 			.then([=](SignResult signResult) {
 				return signCallback(signResult, selectedDevice, outputDir, install);
 			});
 	} else {
-		task = MiniappBuilderCore::instance()->SignWithCertificate(ipaFilepath, certificatePath, certificatePassword, profilePath)
+		task = MiniappBuilderCore::instance()->SignWithCertificate(ipaFilepath, certificatePath, certificatePassword, profilePath, entitlements)
 			.then([=](SignResult signResult) {
 				return signCallback(signResult, selectedDevice, outputDir, install);
 			});

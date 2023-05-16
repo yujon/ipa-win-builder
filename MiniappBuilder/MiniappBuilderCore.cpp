@@ -504,7 +504,9 @@ pplx::task<void> MiniappBuilderCore::InstallApplication(std::string filepath, st
 	});
 }
 
-pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, std::shared_ptr<Device> installDevice,std::string appleID, std::string password, std::string bundleId)
+
+
+pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, std::shared_ptr<Device> installDevice,std::string appleID, std::string password, std::string bundleId, std::unordered_map<std::string, std::string> entitlements)
 {
     fs::path destinationDirectoryPath(temporary_directory());
     destinationDirectoryPath.append(make_uuid());
@@ -586,7 +588,7 @@ pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, 
           })
    .then([=](std::map<std::string, std::shared_ptr<ProvisioningProfile>> profiles)
          {
-             return this->SignCore(app, certificate, profiles);
+             return this->SignCore(app, certificate, profiles, entitlements);
          })
    .then([=](pplx::task<std::optional<std::set<std::string>>> task)
           { 
@@ -620,7 +622,7 @@ pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, 
 }
 
 
-pplx::task<SignResult> MiniappBuilderCore::SignWithCertificate(std::string ipapath, std::string certificatePath, std::optional<std::string> certificatePassword,std::string profilePath)
+pplx::task<SignResult> MiniappBuilderCore::SignWithCertificate(std::string ipapath, std::string certificatePath, std::optional<std::string> certificatePassword,std::string profilePath, std::unordered_map<std::string, std::string> entitlements)
 {
 	fs::path destinationDirectoryPath(temporary_directory());
 	destinationDirectoryPath.append(make_uuid());
@@ -646,7 +648,7 @@ pplx::task<SignResult> MiniappBuilderCore::SignWithCertificate(std::string ipapa
 			auto profile = std::make_shared<ProvisioningProfile>(profilePath);
 			std::map<std::string, std::shared_ptr<ProvisioningProfile>> profiles; 
 			profiles[tempApp->bundleIdentifier()] = profile;
-			return this->SignCore(tempApp, certificate, profiles);
+			return this->SignCore(tempApp, certificate, profiles, entitlements);
 		}
 		catch(std::exception &e)
 		{
@@ -1270,7 +1272,8 @@ pplx::task<std::shared_ptr<ProvisioningProfile>> MiniappBuilderCore::FetchProvis
 
 pplx::task<std::optional<std::set<std::string>>> MiniappBuilderCore::SignCore(std::shared_ptr<Application> app,
                             std::shared_ptr<Certificate> certificate,
-                            std::map<std::string, std::shared_ptr<ProvisioningProfile>> profilesByBundleID)
+                            std::map<std::string, std::shared_ptr<ProvisioningProfile>> profilesByBundleID,
+							std::unordered_map<std::string, std::string> entitlements)
 {
 	auto prepareInfoPlist = [profilesByBundleID](std::shared_ptr<Application> app, plist_t additionalValues){
 		auto profile = profilesByBundleID.at(app->bundleIdentifier());
@@ -1288,7 +1291,7 @@ pplx::task<std::optional<std::set<std::string>>> MiniappBuilderCore::SignCore(st
 		}
 
 		plist_dict_set_item(plist, "CFBundleIdentifier", plist_new_string(profile->bundleIdentifier().c_str()));
-		plist_dict_set_item(plist, "ALTBundleIdentifier", plist_new_string(app->bundleIdentifier().c_str()));
+		plist_dict_set_item(plist, "MiniAppBundleIdentifier", plist_new_string(app->bundleIdentifier().c_str()));
 
 		if (additionalValues != NULL)
 		{
@@ -1343,7 +1346,7 @@ pplx::task<std::optional<std::set<std::string>>> MiniappBuilderCore::SignCore(st
 		}
         
         Signer signer(certificate);
-        signer.SignApp(app->path(), profiles);
+        signer.SignApp(app->path(), profiles, entitlements);
 		        
 		return profileIdentifiers;
     });

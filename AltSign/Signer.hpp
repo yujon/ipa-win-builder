@@ -28,7 +28,7 @@ public:
     std::shared_ptr<Team> team() const;
     std::shared_ptr<Certificate> certificate() const;
     
-    void SignApp(std::string appPath, std::vector<std::shared_ptr<ProvisioningProfile>> profiles);
+    void SignApp(std::string appPath, std::vector<std::shared_ptr<ProvisioningProfile>> profiles, std::unordered_map<std::string, std::string> customEntitlements);
     
 private:
     std::shared_ptr<Team> _team;
