@@ -16,7 +16,6 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-#include <codecvt>
 #include "Archiver.hpp"
 #include <combaseapi.h>
 
@@ -36,85 +35,54 @@ namespace po = boost::program_options;
 
 extern std::string StringFromWideString(std::wstring wideString);
 extern std::wstring WideStringFromString(std::string string);
+extern void SetRegistryBoolValue(const char *lpValue, bool data);
+extern void SetRegistryStringValue(const char* lpValue, std::string string);
+extern bool GetRegistryBoolValue(const char *lpValue);
+extern std::string GetRegistryStringValue(const char* lpValue);
 
 #define stdoutlog(msg) {  std::cout << msg << std::endl; }
 #define stderrlog(msg) {  std::cerr << msg << std::endl; }
 
-std::string make_uuid()
-{
-	GUID guid;
-	CoCreateGuid(&guid);
-
-	std::ostringstream os;
-	os << std::hex << std::setw(8) << std::setfill('0') << guid.Data1;
-	os << '-';
-	os << std::hex << std::setw(4) << std::setfill('0') << guid.Data2;
-	os << '-';
-	os << std::hex << std::setw(4) << std::setfill('0') << guid.Data3;
-	os << '-';
-	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[0]);
-	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[1]);
-	os << '-';
-	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[2]);
-	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[3]);
-	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[4]);
-	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[5]);
-	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[6]);
-	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[7]);
-
-	std::string s(os.str());
-	return s;
-}
-
-std::string temporary_directory()
-{
-	wchar_t rawTempDirectory[1024];
-
-	int length = GetTempPath(1024, rawTempDirectory);
-
-	std::wstring wideString(rawTempDirectory);
-
-	std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
-	std::string tempDirectory = conv1.to_bytes(wideString);
-
-	return tempDirectory;
-}
-
-std::vector<unsigned char> readFile(const char* filename)
-{
-	// open the file:
-	std::ifstream file(filename, std::ios::binary);
-
-	// Stop eating new lines in binary mode!!!
-	file.unsetf(std::ios::skipws);
-
-	// get its size:
-	std::streampos fileSize;
-
-	file.seekg(0, std::ios::end);
-	fileSize = file.tellg();
-	file.seekg(0, std::ios::beg);
-
-	// reserve capacity
-	std::vector<unsigned char> vec;
-	vec.reserve(fileSize);
-
-	// read the data:
-	vec.insert(vec.begin(),
-		std::istream_iterator<unsigned char>(file),
-		std::istream_iterator<unsigned char>());
-
-	return vec;
-}
-
-
 std::string _input_appleid;
 std::string _input_password;
+bool _input_remember_appleIdInfo;
+
+std::string _input_certificate_path;
+std::string _input_certificate_password;
+std::string _input_profile_path;
+bool _input_remember_certificate;
+
+std::string BrowseForFile(std::wstring title, std::wstring filter, std::wstring initialDir)
+{
+    OPENFILENAME ofn = {0};
+    ofn.lStructSize = sizeof(OPENFILENAME);
+    ofn.hwndOwner = NULL;
+    // ofn.lpstrFilter = filter.c_str();
+    ofn.lpstrFile = new TCHAR[MAX_PATH];
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrTitle = title.c_str();
+    ofn.lpstrInitialDir = initialDir.c_str();
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_EXPLORER | OFN_ENABLEHOOK;
+    ofn.lpTemplateName = NULL;
+
+    std::string filePath = "";
+
+    if (GetOpenFileName(&ofn))
+    {
+        filePath = StringFromWideString(ofn.lpstrFile);
+    }
+
+    delete[] ofn.lpstrFile;
+
+    return filePath;
+}
+
 
 BOOL CALLBACK LoginDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	HWND appleIDTextField = GetDlgItem(hwnd, IDC_EDIT1);
 	HWND passwordTextField = GetDlgItem(hwnd, IDC_EDIT2);
+	HWND rememberAppleIdInfoCheckbox = GetDlgItem(hwnd, IDC_CHECK1);
 	HWND installButton = GetDlgItem(hwnd, IDOK);
 
 	switch (Message)
@@ -123,6 +91,7 @@ BOOL CALLBACK LoginDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam
 	{
 		Edit_SetCueBannerText(appleIDTextField, _T("Apple ID"));
 		Edit_SetCueBannerText(passwordTextField, _T("Password"));
+		Edit_SetCueBannerText(rememberAppleIdInfoCheckbox, _T("Remember"));
 
 		Button_Enable(installButton, false);
 
@@ -171,12 +140,12 @@ BOOL CALLBACK LoginDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam
 		{
 			wchar_t appleID[512];
 			wchar_t password[512];
-
 			Edit_GetText(appleIDTextField, appleID, 512);
 			Edit_GetText(passwordTextField, password, 512);
-
 			_input_appleid = StringFromWideString(appleID);
 			_input_password = StringFromWideString(password);
+			int nCheck = SendMessage(rememberAppleIdInfoCheckbox, BM_GETCHECK, 0, 0); // 获取IDC_CHECK1控件的值
+			_input_remember_appleIdInfo = (nCheck == BST_CHECKED);
 			EndDialog(hwnd, IDOK);
 
 			break;
@@ -193,8 +162,77 @@ BOOL CALLBACK LoginDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam
 	return TRUE;
 }
 
-std::unordered_map<std::string, std::string> queryStringToDictionary(const std::string& queryString) {
-	std::unordered_map<std::string, std::string> dict;
+
+BOOL CALLBACK CertificateDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+        case WM_INITDIALOG:
+            {
+                // 初始化对话框
+                return TRUE;
+            }
+            break;
+        case WM_COMMAND:
+            {
+                switch (LOWORD(wParam))
+                {
+                    case IDC_BROWSE_CERT:
+                        {
+                           std::string folderPath = BrowseForFile(L"Please Choose an Apple certificate(p12)", L"p12 文件 (*.p12;)、*.p12;", L"~/Desktop");
+							if (folderPath.size() == 0)
+							{
+								return -1;
+							}
+							SetDlgItemText(hwndDlg, IDC_CERT_PATH, WideStringFromString(folderPath).c_str());
+                            return TRUE;
+                        }
+                        break;
+                    case IDC_BROWSE_PROFILE:
+                        {
+                           std::string folderPath = BrowseForFile(L"Please Choose an Apple profile(mobileprovision)", L"mobileprovision Files (*.mobileprovision)\0*.mobileprovision\0All Files (*.*)\0*.*\0", L"~/Desktop");
+							if (folderPath.size() == 0)
+							{
+								return -1;
+							}
+							SetDlgItemText(hwndDlg, IDC_PROFILE, WideStringFromString(folderPath).c_str());
+                            return TRUE;
+                        }
+                        break;
+                    case IDOK:
+                        {
+                            // 获取输入项的值
+                            TCHAR szCertPath[MAX_PATH] = {0};
+                            TCHAR szCertPassword[256] = {0};
+                            TCHAR szProfile[MAX_PATH] = {0};
+                            GetDlgItemText(hwndDlg, IDC_CERT_PATH, szCertPath, MAX_PATH);
+                            GetDlgItemText(hwndDlg, IDC_CERT_PASSWORD, szCertPassword, 256);
+                            GetDlgItemText(hwndDlg, IDC_PROFILE, szProfile, MAX_PATH);
+							_input_certificate_path =  StringFromWideString(szCertPath);
+							_input_certificate_password =  StringFromWideString(szCertPassword);
+							_input_profile_path =  StringFromWideString(szProfile);
+							int nCheck = SendMessage( GetDlgItem(hwndDlg, IDC_CHECK2), BM_GETCHECK, 0, 0); // 获取IDC_CHECK1控件的值
+							_input_remember_certificate = (nCheck == BST_CHECKED);
+                            EndDialog(hwndDlg, IDOK);
+                            return TRUE;
+                        }
+                        break;
+                    case IDCANCEL:
+                        {
+                            EndDialog(hwndDlg, IDCANCEL);
+                        }
+                        break;
+                }
+            }
+            break;
+		default:
+			return FALSE;
+    }
+    return FALSE;
+}
+
+std::map<std::string, std::string> queryStringToDictionary(const std::string& queryString) {
+	std::map<std::string, std::string> dict;
 	std::vector<std::string> pairs;
 	size_t start = 0;
 	size_t end = 0;
@@ -254,7 +292,7 @@ int main(int argc, char* argv[])
 	po::options_description desc("Allowed options");
 	desc.add_options()
 		("help", "produce help message")
-		("action", po::value<std::string>()->default_value("getDevices"), "sign|getDevices")
+		("action", po::value<std::string>()->default_value("getDevices"), "sign|getDevices|clear")
 		("ipa", po::value<std::string>()->default_value(""), "ipa path")
 		("type", po::value<std::string>()->default_value("appleId"), "apple sign type: appleId or certificate")
 		("appleId", po::value<std::string>()->default_value(""), "apple ID")
@@ -315,12 +353,24 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 
+	if (action == "clear") {
+		SetRegistryBoolValue("rememberAppleId", false);
+		SetRegistryBoolValue("rememberCertificate", false);
+		return 0;
+	}
+
 	if (ipaFilepath.empty()) {
 		stderrlog("Error: ipaFilepath is undefined");
 		return -1;
 	}
 
+	MiniappBuilderCore::instance()->Start();
 	if (signType == "appleId") {
+		bool rememberAppleId = GetRegistryBoolValue("rememberAppleId");
+		if ((appleID.empty() || password.empty()) && rememberAppleId) {
+			appleID = GetRegistryStringValue("appleID");
+			password = GetRegistryStringValue("applePassword");
+		}
 		if (appleID.empty() || password.empty()) {
 			int result = DialogBox(NULL, MAKEINTRESOURCE(ID_LOGIN), NULL, LoginDlgProc);
 			if (result == IDCANCEL)
@@ -331,22 +381,46 @@ int main(int argc, char* argv[])
 
 			appleID = _input_appleid;
 			password = _input_password;
+			rememberAppleId = _input_remember_appleIdInfo;
 			_input_appleid = "";
 			_input_password = "";
+			_input_remember_appleIdInfo = false;
+		}
+		if (rememberAppleId) {
+			SetRegistryBoolValue("rememberAppleId", true);
+			SetRegistryStringValue("appleID", appleID);
+			SetRegistryStringValue("applePassword", password);
+		} else {
+			SetRegistryBoolValue("rememberAppleId", false);
 		}
 	}
 	else {
-		if (certificatePath.empty() || profilePath.empty()) {
-			stderrlog("Error: profile or profile is undefined");
-			return -1;
+		bool rememberCertificate = GetRegistryBoolValue("rememberCertificate");
+		if ((certificatePath.empty() || profilePath.empty()) && rememberCertificate) {
+			certificatePath = GetRegistryStringValue("certificatePath");
+			certificatePassword = GetRegistryStringValue("certificatePassword");
+			profilePath = GetRegistryStringValue("profilePath");
 		}
-		if (!fs::exists(certificatePath)) {
-			stderrlog("Error: certificate file not found");
-			return -1;
+		if (certificatePath.empty() || profilePath.empty() || !fs::exists(certificatePath) || !fs::exists(profilePath)) {
+			int result = DialogBox(NULL, MAKEINTRESOURCE(ID_CERTIFICATE), NULL, CertificateDlgProc);
+			if (result == IDCANCEL)
+			{
+				stderrlog("Error: certificatePath or profilePath is undefined");
+				return -1;
+			}
+			certificatePath = _input_certificate_path;
+			certificatePassword = _input_certificate_password;
+			profilePath = _input_profile_path;
+			rememberCertificate = _input_remember_certificate;
 		}
-		if (!fs::exists(profilePath)) {
-			stderrlog("Error: profile file not found");
-			return -1;
+		if (rememberCertificate) {
+			SetRegistryBoolValue("rememberCertificate", true);
+			SetRegistryStringValue("certificatePath", certificatePath);
+			SetRegistryStringValue("certificatePassword", certificatePassword);
+			SetRegistryStringValue("profilePath", profilePath);
+		}
+		else {
+			SetRegistryBoolValue("rememberCertificate", false);
 		}
 	}
 
@@ -373,11 +447,10 @@ int main(int argc, char* argv[])
 	}
 
 	// entitlements
-	std::unordered_map<std::string, std::string> entitlements = queryStringToDictionary(entitlementsStr);
+	std::map<std::string, std::string> entitlements = queryStringToDictionary(entitlementsStr);
 
 
 	pplx::task<void> task;
-	MiniappBuilderCore::instance()->Start();
 	if (signType == "appleId") {
 		task = MiniappBuilderCore::instance()->SignWithAppleId(ipaFilepath, selectedDevice, appleID, password, bundleId, entitlements)
 			.then([=](SignResult signResult) {

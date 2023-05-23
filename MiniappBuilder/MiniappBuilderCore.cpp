@@ -2,7 +2,7 @@
 #include "MiniappBuilderCore.h"
 #include <strsafe.h>
 #include <Guiddef.h>
-
+#include <string.h>
 #include "AppleAPI.hpp"
 #include "ConnectionManager.hpp"
 #include "InstallError.hpp"
@@ -19,7 +19,7 @@
 #include <filesystem>
 #include <regex>
 #include <numeric>
-
+#include <codecvt>
 #include <plist/plist.h>
 
 #include <WS2tcpip.h>
@@ -44,14 +44,79 @@ using namespace concurrency::streams;       // Asynchronous streams
 
 namespace fs = std::filesystem;
 
-extern std::string temporary_directory();
-extern std::string make_uuid();
-extern std::vector<unsigned char> readFile(const char* filename);
+std::string make_uuid()
+{
+	GUID guid;
+	CoCreateGuid(&guid);
+
+	std::ostringstream os;
+	os << std::hex << std::setw(8) << std::setfill('0') << guid.Data1;
+	os << '-';
+	os << std::hex << std::setw(4) << std::setfill('0') << guid.Data2;
+	os << '-';
+	os << std::hex << std::setw(4) << std::setfill('0') << guid.Data3;
+	os << '-';
+	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[0]);
+	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[1]);
+	os << '-';
+	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[2]);
+	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[3]);
+	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[4]);
+	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[5]);
+	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[6]);
+	os << std::hex << std::setw(2) << std::setfill('0') << static_cast<short>(guid.Data4[7]);
+
+	std::string s(os.str());
+	return s;
+}
+
+std::string temporary_directory()
+{
+	wchar_t rawTempDirectory[1024];
+
+	int length = GetTempPath(1024, rawTempDirectory);
+
+	std::wstring wideString(rawTempDirectory);
+
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
+	std::string tempDirectory = conv1.to_bytes(wideString);
+
+	return tempDirectory;
+}
+
+std::vector<unsigned char> readFile(const char* filename)
+{
+	// open the file:
+	std::ifstream file(filename, std::ios::binary);
+
+	// Stop eating new lines in binary mode!!!
+	file.unsetf(std::ios::skipws);
+
+	// get its size:
+	std::streampos fileSize;
+
+	file.seekg(0, std::ios::end);
+	fileSize = file.tellg();
+	file.seekg(0, std::ios::beg);
+
+	// reserve capacity
+	std::vector<unsigned char> vec;
+	vec.reserve(fileSize);
+
+	// read the data:
+	vec.insert(vec.begin(),
+		std::istream_iterator<unsigned char>(file),
+		std::istream_iterator<unsigned char>());
+
+	return vec;
+}
+
+
 
 extern std::string StringFromWideString(std::wstring wideString);
 extern std::wstring WideStringFromString(std::string string);
 
-const char* REGISTRY_ROOT_KEY = "SOFTWARE\\RileyTestut\\MiniAppBuilder";
+const char* REGISTRY_ROOT_KEY = "SOFTWARE\\MiniAppBuilder";
 const char* DID_LAUNCH_KEY = "Launched";
 const char* PRESENTED_RUNNING_NOTIFICATION_KEY = "PresentedRunningNotification";
 const char* SERVER_ID_KEY = "ServerID";
@@ -506,7 +571,7 @@ pplx::task<void> MiniappBuilderCore::InstallApplication(std::string filepath, st
 
 
 
-pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, std::shared_ptr<Device> installDevice,std::string appleID, std::string password, std::string bundleId, std::unordered_map<std::string, std::string> entitlements)
+pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, std::shared_ptr<Device> installDevice,std::string appleID, std::string password, std::string bundleId, std::map<std::string, std::string> entitlements)
 {
     fs::path destinationDirectoryPath(temporary_directory());
     destinationDirectoryPath.append(make_uuid());
@@ -573,16 +638,28 @@ pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, 
           })
     .then([=](fs::path appFilePath)
           {
-              fs::create_directory(destinationDirectoryPath);
-              auto appBundlePath = UnzipAppBundle(appFilePath.string(), destinationDirectoryPath.string());
+				fs::create_directory(destinationDirectoryPath);
+				auto appBundlePath = UnzipAppBundle(appFilePath.string(), destinationDirectoryPath.string());
 
-			  auto app = std::make_shared<Application>(appBundlePath);
+				auto app = std::make_shared<Application>(appBundlePath);
+				// 更新bundleId
+				Application& application = *app.get();
+				std::string bundleIdentifier = "";
+			  	if (bundleId == "same") {
+					bundleIdentifier = application.bundleIdentifier();
+				} else if (bundleId == "auto") {
+					bundleIdentifier = application.bundleIdentifier() + "." + team->identifier();
+				} else {
+					bundleIdentifier = bundleId;
+				}
+				application.updateBundleIdentifier(bundleIdentifier);
+	
               return app;
           })
     .then([=](std::shared_ptr<Application> tempApp)
           {
-              *app = *tempApp;
-			  return this->PrepareAllProvisioningProfiles(app, device, team, bundleId, session);
+              	*app = *tempApp;
+			  	return this->PrepareAllProvisioningProfiles(app, device, team, bundleId, session);
           })
    .then([=](std::map<std::string, std::shared_ptr<ProvisioningProfile>> profiles)
          {
@@ -620,7 +697,7 @@ pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, 
 }
 
 
-pplx::task<SignResult> MiniappBuilderCore::SignWithCertificate(std::string ipapath, std::string certificatePath, std::optional<std::string> certificatePassword,std::string profilePath, std::unordered_map<std::string, std::string> entitlements)
+pplx::task<SignResult> MiniappBuilderCore::SignWithCertificate(std::string ipapath, std::string certificatePath, std::optional<std::string> certificatePassword,std::string profilePath, std::map<std::string, std::string> entitlements)
 {
 	fs::path destinationDirectoryPath(temporary_directory());
 	destinationDirectoryPath.append(make_uuid());
@@ -993,15 +1070,7 @@ pplx::task<std::shared_ptr<ProvisioningProfile>> MiniappBuilderCore::PrepareProv
 		preferredName = app->name();
 	}
 
-	std::string updatedParentBundleID;
-	if (bundleId == "same") {
-		updatedParentBundleID = parentBundleID;
-	} else if (bundleId == "auto") {
-		updatedParentBundleID = parentBundleID + "." + team->identifier();
-	} else {
-		updatedParentBundleID = bundleId;
-	}
-	
+	std::string updatedParentBundleID = parentBundleID;
 	std::string bundleID = std::regex_replace(app->bundleIdentifier(), std::regex(parentBundleID), updatedParentBundleID);
 
 	return this->RegisterAppID(preferredName, bundleID, team, session)
@@ -1271,7 +1340,7 @@ pplx::task<std::shared_ptr<ProvisioningProfile>> MiniappBuilderCore::FetchProvis
 pplx::task<std::optional<std::set<std::string>>> MiniappBuilderCore::SignCore(std::shared_ptr<Application> app,
                             std::shared_ptr<Certificate> certificate,
                             std::map<std::string, std::shared_ptr<ProvisioningProfile>> profilesByBundleID,
-							std::unordered_map<std::string, std::string> entitlements)
+							std::map<std::string, std::string> entitlements)
 {
 	auto prepareInfoPlist = [profilesByBundleID](std::shared_ptr<Application> app, plist_t additionalValues){
 		auto profile = profilesByBundleID.at(app->bundleIdentifier());

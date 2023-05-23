@@ -2,8 +2,6 @@
 //  Application.cpp
 //  AltSign-Windows
 //
-//  Created by Riley Testut on 8/12/19.
-//  Copyright © 2019 Riley Testut. All rights reserved.
 //
 
 #include "Application.hpp"
@@ -14,6 +12,8 @@
 #include <fstream>
 #include <filesystem>
 #include <WinSock2.h>
+
+#include <plist/plist.h>
 
 #define stdoutlog(msg) {  std::cout << msg << std::endl; }
 #define stderrlog(msg) {  std::cerr << msg << std::endl; }
@@ -36,6 +36,7 @@ Application::~Application()
 
 Application::Application(const Application& app)
 {
+	_bundlePath = app.bundlePath();
 	_name = app.name();
 	_bundleIdentifier = app.bundleIdentifier();
 	_version = app.version();
@@ -52,7 +53,7 @@ Application& Application::operator=(const Application& app)
 	{
 		return *this;
 	}
-
+	_bundlePath = app.bundlePath();
 	_name = app.name();
 	_bundleIdentifier = app.bundleIdentifier();
 	_version = app.version();
@@ -94,6 +95,7 @@ Application::Application(std::string appBundlePath)
     char *version = nullptr;
     plist_get_string_val(versionNode, &version);
 
+	_bundlePath = appBundlePath;
     _name = name;
     _bundleIdentifier = bundleIdentifier;
     _version = version;
@@ -117,6 +119,11 @@ std::ostream& operator<<(std::ostream& os, const Application& app)
     
 #pragma mark - Getters -
     
+std::string Application::bundlePath() const
+{
+    return _bundlePath;
+}
+
 std::string Application::name() const
 {
     return _name;
@@ -232,4 +239,41 @@ std::map<std::string, plist_t> Application::entitlements()
 	}
 
 	return _entitlements;
+}
+
+void Application::updateBundleIdentifier(std::string bundleIdentifier)
+{
+	fs::path path(_bundlePath);
+    path.append("Info.plist");
+	auto plistData = readFile(path.string().c_str());
+
+    plist_t plist = nullptr;
+    plist_from_memory((const char *)plistData.data(), (int)plistData.size(), &plist);
+    if (plist == nullptr)
+    {
+        throw SignError(SignErrorCode::InvalidApp);
+    }
+
+	plist_dict_set_item(plist, "CFBundleIdentifier", plist_new_string(bundleIdentifier.c_str()));
+
+	std::ofstream plist_file(path, std::ios::binary);
+    if (!plist_file.is_open()) {
+		throw SignError(SignErrorCode::InvalidInfoPlist);
+    }
+
+    // 将 plist 对象写入到文件中
+    char* plist_data = NULL;
+    uint32_t plist_size = 0;
+    plist_to_xml(plist, &plist_data, &plist_size);
+    plist_file.write(reinterpret_cast<const char*>(plist_data), plist_size);
+    free(plist_data);
+
+    // 关闭文件
+    plist_file.close();
+
+    // 释放 plist 对象
+    plist_free(plist);
+
+	_bundleIdentifier = bundleIdentifier;
+    
 }

@@ -1,8 +1,6 @@
 //
 //  Semaphore.hpp
 //
-//  Created by Riley Testut on 10/7/20.
-//  Copied from https://stackoverflow.com/a/19659736
 //
 
 #pragma once

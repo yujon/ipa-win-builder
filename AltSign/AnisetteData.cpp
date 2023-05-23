@@ -2,8 +2,6 @@
 //  AnisetteData.cpp
 //  AltSign-Windows
 //
-//  Created by Riley Testut on 11/26/19.
-//  Copyright © 2019 Riley Testut. All rights reserved.
 //
 
 #include "AnisetteData.h"

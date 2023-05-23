@@ -1,8 +1,6 @@
 //
 //  DeveloperDiskManager.hpp
 //
-//  Created by Riley Testut on 7/1/21.
-//  Copyright � 2021 Riley Testut. All rights reserved.
 //
 
 #pragma once

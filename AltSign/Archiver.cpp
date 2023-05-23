@@ -2,8 +2,6 @@
 //  Archiver.cpp
 //  AltSign-Windows
 //
-//  Created by Riley Testut on 8/12/19.
-//  Copyright © 2019 Riley Testut. All rights reserved.
 //
 
 #include <filesystem>
@@ -289,9 +287,9 @@ void WriteFileToZipFile(zipFile *zipFile, fs::path filepath, fs::path relativePa
     }
 }
 
-std::string ZipAppBundle(std::string filepath)
+std::string ZipAppBundle(std::string appBundleFilePath)
 {
-    fs::path appBundlePath = filepath;
+    fs::path appBundlePath = appBundleFilePath;
     
     auto appBundleFilename = appBundlePath.filename();
     auto appName = appBundlePath.filename().stem().string();
@@ -315,10 +313,10 @@ std::string ZipAppBundle(std::string filepath)
     
     fs::path rootPath = fs::relative("", appBundleDirectory);
     
-    for (auto& entry: fs::recursive_directory_iterator(rootPath))
+    for (auto& entry: fs::recursive_directory_iterator(appBundleFilePath))
     {
         auto filepath = entry.path();
-        auto relativePath = entry.path().relative_path();
+        auto relativePath = fs::relative(filepath, appBundleFilePath);
         
         WriteFileToZipFile(&zipFile, filepath, relativePath);
     }

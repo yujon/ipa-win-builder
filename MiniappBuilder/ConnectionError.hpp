@@ -2,8 +2,6 @@
 //  ConnectionError.hpp
 //  
 //
-//  Created by Riley Testut on 6/19/21.
-//  Copyright � 2021 Riley Testut. All rights reserved.
 //
 
 #ifndef ConnectionError_h

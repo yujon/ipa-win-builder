@@ -2,9 +2,6 @@
 //  Signer.cpp
 //  AltSign-Windows
 //
-//  Created by Riley Testut on 8/12/19.
-//  Copyright © 2019 Riley Testut. All rights reserved.
-//
 
 #include "Signer.hpp"
 #include "Error.hpp"
@@ -113,7 +110,7 @@ namespace fs = std::filesystem;
 
 extern std::string make_uuid();
 
-std::string entitlementsToXMLKeyValue(const std::unordered_map<std::string, std::string>& entitlements) {
+std::string entitlementsToXMLKeyValue(const std::map<std::string, std::string>& entitlements) {
   std::stringstream xml;
   for (const auto& [key, value] : entitlements) {
     xml << "<key>" << key << "</key>\n";
@@ -212,7 +209,7 @@ Signer::~Signer()
 	int i = 0;
 }
 
-void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningProfile>> profiles, std::unordered_map<std::string, std::string> customEntitlements)
+void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningProfile>> profiles, std::map<std::string, std::string> customEntitlements)
 {   
     fs::path appPath = fs::path(path);
 
@@ -277,6 +274,15 @@ void Signer::SignApp(std::string path, std::vector<std::shared_ptr<ProvisioningP
             plist_to_xml(entitlements, &entitlementsString, &entitlementsSize);
 
             if (!customEntitlements.empty()) {
+                std::string tempEntitlementsString(entitlementsString);
+                for (auto it = customEntitlements.begin(); it != customEntitlements.end();) {
+                    if (tempEntitlementsString.find(it->first) == std::string::npos) {
+                        it = customEntitlements.erase(it);
+                    }
+                    else {
+                        ++it;
+                    }
+                }
                 std::string customEntitlementsXml = entitlementsToXMLKeyValue(customEntitlements);
                 std::string oldEntitlementsString(entitlementsString);
                 size_t pos = oldEntitlementsString.rfind("</dict>");

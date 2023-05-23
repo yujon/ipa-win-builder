@@ -1,8 +1,6 @@
 //
 //  InstallError.h
 //
-//  Created by Riley Testut on 8/31/19.
-//  Copyright © 2019 Riley Testut. All rights reserved.
 //
 
 #ifndef InstallError_h

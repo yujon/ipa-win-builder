@@ -2,8 +2,6 @@
 //  MiniappBuilderCore.hpp
 //  
 //
-//  Created by Riley Testut on 8/30/19.
-//  Copyright (c) 2019 Riley Testut. All rights reserved.
 //
 
 #pragma once
@@ -57,8 +55,8 @@ public:
     
 	pplx::task<void> InstallApplication(std::string filepath, std::shared_ptr<Device> installDevice, std::optional<std::set<std::string>> activeProfiles);
 	
-	pplx::task<SignResult> SignWithAppleId(std::string filepath, std::shared_ptr<Device> installDevice, std::string appleID, std::string password, std::string bundleId, std::unordered_map<std::string, std::string> entitlements);
-	pplx::task<SignResult> SignWithCertificate(std::string filepath, std::string certificatePath, std::optional<std::string> certificatePassword,std::string profilePath, std::unordered_map<std::string, std::string> entitlements);
+	pplx::task<SignResult> SignWithAppleId(std::string filepath, std::shared_ptr<Device> installDevice, std::string appleID, std::string password, std::string bundleId, std::map<std::string, std::string> entitlements);
+	pplx::task<SignResult> SignWithCertificate(std::string filepath, std::string certificatePath, std::optional<std::string> certificatePassword,std::string profilePath, std::map<std::string, std::string> entitlements);
 
 
 	
@@ -84,6 +82,8 @@ public:
 	bool boolValueForRegistryKey(std::string key) const;
 	void setBoolValueForRegistryKey(bool value, std::string key);
 
+	std::string BrowseForFolder(std::wstring title, std::string folderPath);
+
 private:
 	MiniappBuilderCore();
 	~MiniappBuilderCore();
@@ -92,8 +92,6 @@ private:
 
 	bool CheckDependencies();
 	bool CheckiCloudDependencies();
-
-	std::string BrowseForFolder(std::wstring title, std::string folderPath);
 
 	bool _presentedNotification;
 	GUID _notificationIconGUID;
@@ -137,5 +135,6 @@ private:
     
 	pplx::task<std::optional<std::set<std::string>>> SignCore(std::shared_ptr<Application> app,
 		std::shared_ptr<Certificate> certificate,
-		std::map<std::string, std::shared_ptr<ProvisioningProfile>> profilesByBundleID, std::unordered_map<std::string, std::string> entitlements);
+		std::map<std::string, std::shared_ptr<ProvisioningProfile>> profilesByBundleID,
+		std::map<std::string, std::string> entitlements);
 };

@@ -2,8 +2,6 @@
 //  Team.cpp
 //  AltSign-Windows
 //
-//  Created by Riley Testut on 8/9/19.
-//  Copyright © 2019 Riley Testut. All rights reserved.
 //
 
 #include "Team.hpp"

@@ -2,8 +2,6 @@
 //  Application.hpp
 //  AltSign-Windows
 //
-//  Created by Riley Testut on 8/12/19.
-//  Copyright © 2019 Riley Testut. All rights reserved.
 //
 
 #ifndef Application_hpp
@@ -32,19 +30,21 @@ public:
 	Application(const Application& app);
 	Application& operator=(const Application& app);
     
+    std::string bundlePath() const;
     std::string name() const;
     std::string bundleIdentifier() const;
     std::string version() const;
     std::string path() const;
-
 	std::shared_ptr<ProvisioningProfile> provisioningProfile();
 	std::vector<std::shared_ptr<Application>> appExtensions() const;
-
 	std::map<std::string, plist_t> entitlements();
     
     friend std::ostream& operator<<(std::ostream& os, const Application& app);
+
+    void updateBundleIdentifier(std::string bundleIdentifier);
     
 private:
+    std::string _bundlePath;
     std::string _name;
     std::string _bundleIdentifier;
     std::string _version;

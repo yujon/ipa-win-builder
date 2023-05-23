@@ -2,8 +2,6 @@
 //  Signer.hpp
 //  AltSign-Windows
 //
-//  Created by Riley Testut on 8/12/19.
-//  Copyright © 2019 Riley Testut. All rights reserved.
 //
 
 #ifndef Signer_hpp
@@ -28,7 +26,7 @@ public:
     std::shared_ptr<Team> team() const;
     std::shared_ptr<Certificate> certificate() const;
     
-    void SignApp(std::string appPath, std::vector<std::shared_ptr<ProvisioningProfile>> profiles, std::unordered_map<std::string, std::string> customEntitlements);
+    void SignApp(std::string appPath, std::vector<std::shared_ptr<ProvisioningProfile>> profiles, std::map<std::string, std::string> customEntitlements);
     
 private:
     std::shared_ptr<Team> _team;

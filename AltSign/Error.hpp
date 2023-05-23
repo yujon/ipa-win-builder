@@ -2,9 +2,6 @@
 //  Error.hpp
 //  AltSign-Windows
 //
-//  Created by Riley Testut on 8/8/19.
-//  Copyright © 2019 Riley Testut. All rights reserved.
-//
 
 #ifndef Error_hpp
 #define Error_hpp
@@ -26,6 +23,7 @@ enum class SignErrorCode
     InvalidApp,
     MissingAppBundle,
     MissingInfoPlist,
+    InvalidInfoPlist,
     MissingProvisioningProfile,
     MissingAppleRootCertificate,
     InvalidCertificate,

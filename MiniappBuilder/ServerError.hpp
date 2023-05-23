@@ -1,8 +1,6 @@
 //
 //  ServerError.hpp
 //
-//  Created by Riley Testut on 8/13/19.
-//  Copyright © 2019 Riley Testut. All rights reserved.
 //
 
 #ifndef ServerError_hpp

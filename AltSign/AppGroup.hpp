@@ -2,9 +2,6 @@
 //  AppGroup.hpp
 //  AltSign-Windows
 //
-//  Created by Riley Testut on 5/19/20.
-//  Copyright (c) 2020 Riley Testut. All rights reserved.
-//
 
 #pragma once
 
