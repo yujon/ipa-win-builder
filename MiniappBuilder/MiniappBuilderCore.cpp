@@ -584,6 +584,7 @@ pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, 
 	auto certificate = std::make_shared<Certificate>();
 	auto session = std::make_shared<AppleAPISession>();
 
+	stdoutlog("Init the sign environment...");
 	return pplx::create_task([=]() {
 		auto anisetteData = AnisetteDataManager::instance()->FetchAnisetteData();
 		return this->Authenticate(appleID, password, anisetteData);
@@ -593,20 +594,20 @@ pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, 
               *account = *(pair.first);
 			  *session = *(pair.second);
 
-			  stdoutlog("Fetching team...");
+			//   stdoutlog("Fetching team...");
 
               return this->FetchTeam(account, session);
           })
     .then([=](std::shared_ptr<Team> tempTeam)
           {
-			stdoutlog("Registering device...");
+			// stdoutlog("Registering device...");
 
               *team = *tempTeam;
               return this->RegisterDevice(installDevice, team, session);
           })
     .then([=](std::shared_ptr<Device> tempDevice)
           {
-				stdoutlog("Fetching certificate...");
+				// stdoutlog("Fetching certificate...");
 
 				tempDevice->setOSVersion(installDevice->osVersion());
 				*device = *tempDevice;
@@ -617,24 +618,24 @@ pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, 
           {
 				*certificate = *tempCertificate;
 				// stdoutlog("Preparing device...");				
-                // return this->PrepareDevice(device).then([=](pplx::task<void> task) {
-                //     try
-                //     {
-                //         // Don't rethrow error, and instead continue installing app even if we couldn't install Developer disk image.
-                //         task.get();
-                //     }
-                //     catch (Error& error)
-                //     {
-                //         stderrlog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << error.localizedDescription());
-                //     }
-                //     catch (std::exception& exception)
-                //     {
-                //         stderrlog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << exception.what());
-                //     }
+                return this->PrepareDevice(device).then([=](pplx::task<void> task) {
+                    try
+                    {
+                        // Don't rethrow error, and instead continue installing app even if we couldn't install Developer disk image.
+                        task.get();
+                    }
+                    catch (Error& error)
+                    {
+                        stderrlog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << error.localizedDescription());
+                    }
+                    catch (std::exception& exception)
+                    {
+                        stderrlog("Failed to install DeveloperDiskImage.dmg to " << *device << ". " << exception.what());
+                    }
 					return pplx::create_task([ipapath] {
 						return fs::path(ipapath);
 						});
-                // });
+                });
           })
     .then([=](fs::path appFilePath)
           {
@@ -1414,7 +1415,8 @@ pplx::task<std::optional<std::set<std::string>>> MiniappBuilderCore::SignCore(st
         
         Signer signer(certificate);
         signer.SignApp(app->path(), profiles, entitlements);
-		        
+
+		stdoutlog("Sign successfully");    
 		return profileIdentifiers;
     });
 }

@@ -24,6 +24,15 @@ extern "C" {
  #include <dirent.h>
 #endif
 
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+#include <ctime>
+#include <iomanip>
+#include <cstdint>
+
 const int ALTReadBufferSize = 8192;
 const int ALTMaxFilenameLength = 512;
 
@@ -266,19 +275,30 @@ void WriteFileToZipFile(zipFile *zipFile, fs::path filepath, fs::path relativePa
         
         fileInfo.external_fa = (unsigned int)(permissionsLong << 16L);
         
-        std::ifstream ifs(filepath.string());
-        std::vector<char> data((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-        
-        bytes = data.data();
-        fileSize = (unsigned int)data.size();
+        // std::ifstream ifs(filepath.string());
+        // std::vector<char> data((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+        // bytes = data.data();
+        // fileSize = (unsigned int)data.size();
+
+		 std::fstream f(filepath.c_str(),std::ios::binary | std::ios::in);
+		 f.seekg(0, std::ios::end);
+		 long size = f.tellg();
+		 f.seekg(0, std::ios::beg);
+		 if ( size <= 0 )
+		 {
+		 	 zipWriteInFileInZip(*zipFile, NULL, 0);
+             return;
+		 }
+         char* bytes = new char[size];
+		 f.read(bytes, size);
     }
 
 	std::replace(filename.begin(), filename.end(), ALTDirectoryDeliminator, '/');
     
-    if (zipOpenNewFileInZip(*zipFile, (const char *)filename.c_str(), &fileInfo, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION) != ZIP_OK)
-    {
-        throw ArchiveError(ArchiveErrorCode::UnknownWrite);
-    }
+     if (zipOpenNewFileInZip(*zipFile, (const char *)filename.c_str(), &fileInfo, NULL, 0, NULL, 0, NULL, Z_DEFLATED, Z_DEFAULT_COMPRESSION) != ZIP_OK)
+     {
+         throw ArchiveError(ArchiveErrorCode::UnknownWrite);
+     }
     
     if (zipWriteInFileInZip(*zipFile, bytes, fileSize) != ZIP_OK)
     {
@@ -293,7 +313,6 @@ std::string ZipAppBundle(std::string appBundleFilePath)
     
     auto appBundleFilename = appBundlePath.filename();
     auto appName = appBundlePath.filename().stem().string();
-    
     auto ipaName = appName + ".ipa";
     auto ipaPath = appBundlePath.remove_filename().append(ipaName);
     
@@ -325,6 +344,8 @@ std::string ZipAppBundle(std::string appBundleFilePath)
     WriteFileToZipFile(&zipFile, appBundleDirectory, appBundleDirectory);
     
     zipClose(zipFile, NULL);
+
     
     return ipaPath.string();
 }
+

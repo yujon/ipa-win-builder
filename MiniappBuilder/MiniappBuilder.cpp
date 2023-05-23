@@ -252,31 +252,30 @@ std::map<std::string, std::string> queryStringToDictionary(const std::string& qu
 	return dict;
 }
 
-pplx::task<void> signCallback(SignResult signResult, std::shared_ptr<Device> selectedDevice, std::string outputDir,  bool install) {
+void signCallback(SignResult signResult, std::shared_ptr<Device> selectedDevice, std::string outputDir,  bool install) {
 	Application app = signResult.application;
 	fs::path appBundlePath = app.path();
 	if (!outputDir.empty()) {
 		std::string ipaPath = ZipAppBundle(appBundlePath.string());
 		fs::path src_path(ipaPath);
 		fs::path dist_path(outputDir);
-
 		fs::path filename = src_path.filename(); // 获取文件名
     	fs::path extension = src_path.extension(); // 获取扩展名
-
     	fs::path target_path = dist_path / filename; // 将文件名添加到目标路径中
     	target_path.replace_extension(extension); // 将扩展名添加到目标路径中
-		
 		if (fs::exists(target_path)) {
 			fs::remove(target_path);
 		}
 		fs::rename(ipaPath, target_path);
+		stdoutlog("Export the ipa successfully:" << target_path);
 	}
 	if (install) {
-		return MiniappBuilderCore::instance()->InstallApplication(app.path(), selectedDevice, signResult.activeProfiles)
+		 MiniappBuilderCore::instance()->InstallApplication(app.path(), selectedDevice, signResult.activeProfiles)
 			.then([=]() {
 				if (fs::exists(appBundlePath.parent_path())) {
 					fs::remove_all(appBundlePath.parent_path());
 				}
+				stdoutlog("Install successfully")
 			});
 	} else {
 		if (fs::exists(appBundlePath.parent_path())) {
