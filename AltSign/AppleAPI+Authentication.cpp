@@ -744,7 +744,7 @@ pplx::task<std::string> AppleAPI::FetchAuthToken(std::map<std::string, plist_t> 
 		char* token = nullptr;
 		plist_get_string_val(tokenNode, &token);
 
-		stdoutlog("Got token for " << app << "!\nValue : " << token);
+		// stdoutlog("Got token for " << app << "!\nValue : " << token);
 
 		return std::string(token);
 	});
