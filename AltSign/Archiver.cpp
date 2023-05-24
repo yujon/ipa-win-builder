@@ -282,15 +282,15 @@ void WriteFileToZipFile(zipFile *zipFile, fs::path filepath, fs::path relativePa
 
 		 std::fstream f(filepath.c_str(),std::ios::binary | std::ios::in);
 		 f.seekg(0, std::ios::end);
-		 long size = f.tellg();
+		 fileSize = f.tellg();
 		 f.seekg(0, std::ios::beg);
-		 if ( size <= 0 )
+		 if ( fileSize <= 0 )
 		 {
 		 	 zipWriteInFileInZip(*zipFile, NULL, 0);
              return;
 		 }
-         char* bytes = new char[size];
-		 f.read(bytes, size);
+         bytes = new char[fileSize];
+		 f.read(bytes, fileSize);
     }
 
 	std::replace(filename.begin(), filename.end(), ALTDirectoryDeliminator, '/');
@@ -305,6 +305,7 @@ void WriteFileToZipFile(zipFile *zipFile, fs::path filepath, fs::path relativePa
         zipCloseFileInZip(*zipFile);
         throw ArchiveError(ArchiveErrorCode::UnknownWrite);
     }
+	delete[] bytes;
 }
 
 std::string ZipAppBundle(std::string appBundleFilePath)
@@ -329,19 +330,18 @@ std::string ZipAppBundle(std::string appBundleFilePath)
     
     fs::path payloadDirectory = "Payload";
     fs::path appBundleDirectory = payloadDirectory.append(appBundleFilename.string());
-    
-    fs::path rootPath = fs::relative("", appBundleDirectory);
+	fs::path payloadAbsDirectory = appBundlePath.parent_path().parent_path();
     
     for (auto& entry: fs::recursive_directory_iterator(appBundleFilePath))
     {
         auto filepath = entry.path();
-        auto relativePath = fs::relative(filepath, appBundleFilePath);
+        auto relativePath = fs::relative(filepath, payloadAbsDirectory);
         
         WriteFileToZipFile(&zipFile, filepath, relativePath);
     }
     
-    WriteFileToZipFile(&zipFile, payloadDirectory, payloadDirectory);
-    WriteFileToZipFile(&zipFile, appBundleDirectory, appBundleDirectory);
+   /* WriteFileToZipFile(&zipFile, payloadDirectory, payloadDirectory);
+    WriteFileToZipFile(&zipFile, appBundleDirectory, appBundleDirectory);*/
     
     zipClose(zipFile, NULL);
 
