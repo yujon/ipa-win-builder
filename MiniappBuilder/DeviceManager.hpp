@@ -38,6 +38,7 @@ public:
 
 	pplx::task<void> InstallApp(std::string filepath, std::string deviceUDID, std::optional<std::set<std::string>> activeProvisioningProfiles, std::function<void(double)> progressCompletionHandler);
 	pplx::task<void> RemoveApp(std::string bundleIdentifier, std::string deviceUDID);
+	pplx::task<void> LaunchApp(std::string bundleIdentifier, std::string deviceUDID);
 
 	pplx::task<std::shared_ptr<WiredConnection>> StartWiredConnection(std::shared_ptr<Device> device);
 	pplx::task<std::shared_ptr<NotificationConnection>> StartNotificationConnection(std::shared_ptr<Device> device);

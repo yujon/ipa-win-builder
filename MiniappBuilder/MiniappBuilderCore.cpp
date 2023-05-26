@@ -500,8 +500,10 @@ void MiniappBuilderCore::Stop()
 }
 
 
-pplx::task<void> MiniappBuilderCore::InstallApplication(std::string filepath, std::shared_ptr<Device> installDevice, std::optional<std::set<std::string>> activeProfiles)
+pplx::task<void> MiniappBuilderCore::InstallApplication(Application application, std::shared_ptr<Device> installDevice, std::optional<std::set<std::string>> activeProfiles)
 {
+	std::string filepath = application.path();
+	std::string bundleIdentifier = application.bundleIdentifier();
     auto appName =fs::path(filepath).filename().string();
 	stdoutlog("Install the app... ");
 	return DeviceManager::instance()->InstallApp(filepath, installDevice->identifier(), activeProfiles, [](double progress) {
@@ -566,6 +568,9 @@ pplx::task<void> MiniappBuilderCore::InstallApplication(std::string filepath, st
 		{
 			throw;
 		}
+	})
+	.then([=](pplx::task<void> task) {
+		return DeviceManager::instance()->LaunchApp(bundleIdentifier, installDevice->identifier());
 	});
 }
 

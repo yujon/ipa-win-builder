@@ -506,6 +506,123 @@ pplx::task<void> DeviceManager::InstallApp(std::string appFilepath, std::string 
 	});
 }
 
+pplx::task<void> DeviceManager::LaunchApp(std::string bundleIdentifier, std::string deviceUDID)
+{
+	return pplx::task<void>([=] {
+		idevice_t device = NULL;
+		lockdownd_client_t client = NULL;
+		instproxy_client_t ipc = NULL;
+		lockdownd_service_descriptor_t service = NULL;
+		debugserver_client_t debugserver_client;
+		char* path = NULL;
+    	char* working_directory = NULL;
+		char* response = NULL;
+		debugserver_command_t command = NULL;
+		debugserver_error_t dres = DEBUGSERVER_E_UNKNOWN_ERROR;
+
+		auto cleanUp = [&]() {
+			if (service) {
+				lockdownd_service_descriptor_free(service);
+			}
+
+			if (ipc) {
+				instproxy_client_free(ipc);
+			}
+
+			if (client) {
+				lockdownd_client_free(client);
+			}
+
+			if (device) {
+				idevice_free(device);
+			}
+		};
+
+		try 
+		{
+			/* Find Device */
+			if (idevice_new_with_options(&device, deviceUDID.c_str(), (enum idevice_options)((int)IDEVICE_LOOKUP_NETWORK | (int)IDEVICE_LOOKUP_USBMUX)) != IDEVICE_E_SUCCESS)
+			{
+				throw ServerError(ServerErrorCode::DeviceNotFound);
+			}
+
+			/* Connect to Device */
+			if (lockdownd_client_new_with_handshake(device, &client, "miniappBuilder") != LOCKDOWN_E_SUCCESS)
+			{
+				throw ServerError(ServerErrorCode::ConnectionFailed);
+			}
+
+			/* Connect to Installation Proxy */
+			if ((lockdownd_start_service(client, "com.apple.mobile.installation_proxy", &service) != LOCKDOWN_E_SUCCESS) || service == NULL)
+			{
+				throw ServerError(ServerErrorCode::ConnectionFailed);
+			}
+
+			if (instproxy_client_new(device, service, &ipc) != INSTPROXY_E_SUCCESS)
+			{
+				throw ServerError(ServerErrorCode::ConnectionFailed);
+			}
+
+			if (service)
+			{
+				lockdownd_service_descriptor_free(service);
+				service = NULL;
+			}
+
+			// start debugserver
+			if (debugserver_client_start_service(device, &debugserver_client, "miniapp-builder") != DEBUGSERVER_E_SUCCESS) {
+				stderrlog(
+					"Could not start com.apple.debugserver!\n\
+					Please make sure to mount the developer disk image first:\n\
+					  1) Get the iOS version from `ideviceinfo -k ProductVersion`.\n\
+					  2) Find the matching iPhoneOS DeveloperDiskImage.dmg files.\n\
+					  3) Run `ideviceimagemounter` with the above path.\n");
+				throw ServerError(ServerErrorCode::ConnectionFailed);
+			}
+
+			// get app path
+			instproxy_client_get_path_for_bundle_identifier(ipc, bundleIdentifier.c_str(), &path);
+
+			/* set working directory */
+			char* working_dir[2] = {working_directory, NULL};
+			debugserver_command_new("QSetWorkingDir:", 1, working_dir, &command);
+			dres = debugserver_client_send_command(debugserver_client, command, &response, NULL);
+			debugserver_command_free(command);
+			command = NULL;
+			if (response) {
+				free(response);
+				response = NULL;
+			}
+			
+			const char *app_args[] = { path };
+			debugserver_client_set_argv(debugserver_client, 1, app_args, NULL);
+
+			debugserver_command_new("qLaunchSuccess", 0, NULL, &command);
+			dres = debugserver_client_send_command(debugserver_client, command, &response, NULL);
+			debugserver_command_free(command);
+			command = NULL;
+			if (response) {
+				free(response);
+				response = NULL;
+			}
+
+			// dettach
+			debugserver_command_new("D", 0, NULL, &command);
+			dres = debugserver_client_send_command(debugserver_client, command, &response, NULL);
+			debugserver_command_free(command);
+			command = NULL;
+
+			int res = (dres == DEBUGSERVER_E_SUCCESS) ? 0: -1;
+			
+			cleanUp();
+		}
+		catch (std::exception& exception) {
+			cleanUp();
+			throw;
+		}
+	});
+}
+
 void DeviceManager::WriteDirectory(afc_client_t client, std::string directoryPath, std::string destinationPath, std::function<void(std::string)> wroteFileCallback)
 {
 	std::replace(destinationPath.begin(), destinationPath.end(), '\\', '/');

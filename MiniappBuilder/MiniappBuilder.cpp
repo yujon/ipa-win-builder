@@ -252,7 +252,7 @@ std::map<std::string, std::string> queryStringToDictionary(const std::string& qu
 	return dict;
 }
 
-void signCallback(SignResult signResult, std::shared_ptr<Device> selectedDevice, std::string outputDir,  bool install) {
+pplx::task<void> signCallback(SignResult signResult, std::shared_ptr<Device> selectedDevice, std::string outputDir,  bool install) {
 	Application app = signResult.application;
 	fs::path appBundlePath = app.path();
 	if (!outputDir.empty()) {
@@ -270,17 +270,19 @@ void signCallback(SignResult signResult, std::shared_ptr<Device> selectedDevice,
 		stdoutlog("Export the ipa successfully:" << target_path);
 	}
 	if (install) {
-		 MiniappBuilderCore::instance()->InstallApplication(app.path(), selectedDevice, signResult.activeProfiles)
+		return MiniappBuilderCore::instance()->InstallApplication(app, selectedDevice, signResult.activeProfiles)
 			.then([=]() {
 				if (fs::exists(appBundlePath.parent_path())) {
 					fs::remove_all(appBundlePath.parent_path());
 				}
-				stdoutlog("Install successfully")
+				stdoutlog("Launch successfully")
 			});
 	} else {
-		if (fs::exists(appBundlePath.parent_path())) {
-			fs::remove_all(appBundlePath.parent_path());
-		}
+		return pplx::create_task([appBundlePath] {
+			if (fs::exists(appBundlePath.parent_path())) {
+				fs::remove_all(appBundlePath.parent_path());
+			}
+		});
 	}
 }
 
