@@ -52,6 +52,16 @@ std::string _input_certificate_password;
 std::string _input_profile_path;
 bool _input_remember_certificate;
 
+std::string& trim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+        return !std::isspace(ch);
+    }));
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+        return !std::isspace(ch);
+    }).base(), s.end());
+    return s;
+}
+
 std::string BrowseForFile(std::wstring title, std::wstring filter, std::wstring initialDir)
 {
     OPENFILENAME ofn = {0};
@@ -443,7 +453,7 @@ int main(int argc, char* argv[])
 			selectedDevice = devices[0];
 		}
 		else {
-			selectedDevice = std::make_shared<Device>(deviceName, deviceId, Device::Type::iPhone);
+			selectedDevice = std::make_shared<Device>(deviceName, trim(deviceId), Device::Type::iPhone);
 		}
 	}
 
