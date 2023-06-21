@@ -56,7 +56,7 @@ public:
 	pplx::task<void> InstallApplication(Application application, std::shared_ptr<Device> installDevice, std::optional<std::set<std::string>> activeProfiles);
 	
 	pplx::task<SignResult> SignWithAppleId(std::string filepath, std::shared_ptr<Device> installDevice, std::string appleID, std::string password, std::string bundleId, std::map<std::string, std::string> entitlements);
-	pplx::task<SignResult> SignWithCertificate(std::string filepath, std::string certificatePath, std::optional<std::string> certificatePassword,std::string profilePath, std::map<std::string, std::string> entitlements);
+	pplx::task<SignResult> SignWithCertificate(std::string filepath, std::string certificatePath, std::optional<std::string> certificatePassword,std::string profilePath, std::string extensionProfilePath, std::map<std::string, std::string> entitlements);
 
 
 	

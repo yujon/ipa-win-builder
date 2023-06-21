@@ -503,7 +503,7 @@ int main(int argc, char* argv[])
 				return signCallback(signResult, selectedDevice, outputDir, install);
 			});
 	} else {
-		task = MiniappBuilderCore::instance()->SignWithCertificate(ipaFilepath, certificatePath, certificatePassword, profilePath, entitlements)
+		task = MiniappBuilderCore::instance()->SignWithCertificate(ipaFilepath, certificatePath, certificatePassword, profilePath, extensionProfilePath, entitlements)
 			.then([=](SignResult signResult) {
 				return signCallback(signResult, selectedDevice, outputDir, install);
 			});

@@ -15,6 +15,7 @@ enum class InstallErrorCode
     MissingPrivateKey,
     MissingCertificate,
     MissingInfoPlist,
+    MissingProfile
 };
 
 class InstallError: public Error
@@ -47,6 +48,9 @@ public:
 
 		case InstallErrorCode::MissingInfoPlist:
 			return "The app's Info.plist could not be found.";
+
+		case InstallErrorCode::MissingProfile:
+			return "The profile has no map(NES or App).";
 		}
     }
 };

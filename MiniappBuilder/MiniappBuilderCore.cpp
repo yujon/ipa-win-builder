@@ -703,7 +703,7 @@ pplx::task<SignResult> MiniappBuilderCore::SignWithAppleId(std::string ipapath, 
 }
 
 
-pplx::task<SignResult> MiniappBuilderCore::SignWithCertificate(std::string ipapath, std::string certificatePath, std::optional<std::string> certificatePassword,std::string profilePath, std::map<std::string, std::string> entitlements)
+pplx::task<SignResult> MiniappBuilderCore::SignWithCertificate(std::string ipapath, std::string certificatePath, std::optional<std::string> certificatePassword,std::string profilePath, std::string extensionProfilePath, std::map<std::string, std::string> entitlements)
 {
 	fs::path destinationDirectoryPath(temporary_directory());
 	destinationDirectoryPath.append(make_uuid());
@@ -727,8 +727,13 @@ pplx::task<SignResult> MiniappBuilderCore::SignWithCertificate(std::string ipapa
 			// Manually set machineIdentifier so we can encrypt + embed certificate if needed.
 			certificate->setMachineIdentifier(certificatePassword);
 			auto profile = std::make_shared<ProvisioningProfile>(profilePath);
-			std::map<std::string, std::shared_ptr<ProvisioningProfile>> profiles; 
+			std::map<std::string, std::shared_ptr<ProvisioningProfile>> profiles;
 			profiles[tempApp->bundleIdentifier()] = profile;
+			if (!extensionProfilePath.empty()) {
+				auto extensionProfile = std::make_shared<ProvisioningProfile>(extensionProfilePath);
+				profiles["__extensionProfileForAPS__"] = extensionProfile;
+			}
+			
 			return this->SignCore(tempApp, certificate, profiles, entitlements);
 		}
 		catch(std::exception &e)
@@ -1349,7 +1354,16 @@ pplx::task<std::optional<std::set<std::string>>> MiniappBuilderCore::SignCore(st
 							std::map<std::string, std::string> entitlements)
 {
 	auto prepareInfoPlist = [profilesByBundleID](std::shared_ptr<Application> app, plist_t additionalValues){
-		auto profile = profilesByBundleID.at(app->bundleIdentifier());
+		std::string targetProfileIdentifier = app->bundleIdentifier();
+		if (profilesByBundleID.count(app->bundleIdentifier()) == 0) {
+			if (profilesByBundleID.count("__extensionProfileForAPS__") == 0) {
+				throw InstallError(InstallErrorCode::MissingInfoPlist);
+			} else {
+				targetProfileIdentifier = "__extensionProfileForAPS__";
+			}
+			
+		};
+		auto profile = profilesByBundleID.at(targetProfileIdentifier);
 
 		fs::path infoPlistPath(app->path());
 		infoPlistPath.append("Info.plist");
