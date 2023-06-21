@@ -25,7 +25,9 @@
 #define IDC_BROWSE_PROFILE              2005
 #define ID_CERTIFICATE                  2006
 #define IDC_CHECK2                      2007
-
+#define IDC_BROWSE_EXTENSION_PROFILE    2008
+#define IDC_EXTENSION_PROFILE           2009
+#define ID_CERTIFICATE_EXTENSION        2010
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED

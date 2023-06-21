@@ -47,9 +47,11 @@ std::string _input_appleid;
 std::string _input_password;
 bool _input_remember_appleIdInfo;
 
+bool _enable_extension_profile;
 std::string _input_certificate_path;
 std::string _input_certificate_password;
 std::string _input_profile_path;
+std::string _input_extension_profile_path; 
 bool _input_remember_certificate;
 
 std::string& trim(std::string &s) {
@@ -209,15 +211,31 @@ BOOL CALLBACK CertificateDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
                             return TRUE;
                         }
                         break;
+					case IDC_BROWSE_EXTENSION_PROFILE:
+                        {
+                           std::string folderPath = BrowseForFile(L"Please Choose an Apple Notification Service Extension profile(mobileprovision)", L"mobileprovision Files (*.mobileprovision)\0*.mobileprovision\0All Files (*.*)\0*.*\0", L"~/Desktop");
+							if (folderPath.size() == 0)
+							{
+								return -1;
+							}
+							SetDlgItemText(hwndDlg, IDC_EXTENSION_PROFILE, WideStringFromString(folderPath).c_str());
+                            return TRUE;
+                        }
+                        break;
                     case IDOK:
                         {
                             // 获取输入项的值
                             TCHAR szCertPath[MAX_PATH] = {0};
                             TCHAR szCertPassword[256] = {0};
                             TCHAR szProfile[MAX_PATH] = {0};
+							TCHAR szExtensionProfile[MAX_PATH] = {0};
                             GetDlgItemText(hwndDlg, IDC_CERT_PATH, szCertPath, MAX_PATH);
                             GetDlgItemText(hwndDlg, IDC_CERT_PASSWORD, szCertPassword, 256);
                             GetDlgItemText(hwndDlg, IDC_PROFILE, szProfile, MAX_PATH);
+							GetDlgItemText(hwndDlg, IDC_EXTENSION_PROFILE, szExtensionProfile, MAX_PATH);
+							if (_enable_extension_profile) {
+								_input_extension_profile_path =  StringFromWideString(szExtensionProfile);
+							}
 							_input_certificate_path =  StringFromWideString(szCertPath);
 							_input_certificate_password =  StringFromWideString(szCertPassword);
 							_input_profile_path =  StringFromWideString(szProfile);
@@ -316,7 +334,8 @@ int main(int argc, char* argv[])
 		("certificatePassword", po::value<std::string>()->default_value(""), "certificate password")
 		("profilePath", po::value<std::string>()->default_value(""), "profile path")
 		("output", po::value<std::string>()->default_value(""), "output dir")
-		("install", po::value<bool>()->default_value(false), "whether if install instantly to device");
+		("install", po::value<bool>()->default_value(false), "whether if install instantly to device")
+		("extension", po::value<bool>()->default_value(false), "enable extension profile path");
 
 	po::variables_map vm;
 	po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -346,6 +365,8 @@ int main(int argc, char* argv[])
 
 	std::string outputDir = vm["output"].as<std::string>();
 	bool install = vm["install"].as<bool>();
+	bool enableExtensionProfilePath = vm["extension"].as<bool>();
+	std::string extensionProfilePath = "";
 
 	if (action == "getDevices") {
 		auto devices = DeviceManager::instance()->availableDevices();
@@ -411,9 +432,16 @@ int main(int argc, char* argv[])
 			certificatePath = GetRegistryStringValue("certificatePath");
 			certificatePassword = GetRegistryStringValue("certificatePassword");
 			profilePath = GetRegistryStringValue("profilePath");
+			if (enableExtensionProfilePath) {
+				extensionProfilePath = GetRegistryStringValue("extensionProfilePath");
+			}
 		}
-		if (certificatePath.empty() || profilePath.empty() || !fs::exists(certificatePath) || !fs::exists(profilePath)) {
-			int result = DialogBox(NULL, MAKEINTRESOURCE(ID_CERTIFICATE), NULL, CertificateDlgProc);
+
+		if (certificatePath.empty() || profilePath.empty() || (enableExtensionProfilePath && extensionProfilePath.empty()) || !fs::exists(certificatePath) || !fs::exists(profilePath) || (enableExtensionProfilePath && !fs::exists(extensionProfilePath))) {
+			if (enableExtensionProfilePath) {
+				_enable_extension_profile = true;
+			}
+			int result = DialogBox(NULL, MAKEINTRESOURCE(enableExtensionProfilePath ? ID_CERTIFICATE_EXTENSION : ID_CERTIFICATE), NULL, CertificateDlgProc);
 			if (result == IDCANCEL)
 			{
 				stderrlog("Error: certificatePath or profilePath is undefined");
@@ -423,12 +451,19 @@ int main(int argc, char* argv[])
 			certificatePassword = _input_certificate_password;
 			profilePath = _input_profile_path;
 			rememberCertificate = _input_remember_certificate;
+			if (enableExtensionProfilePath) {
+				extensionProfilePath = _input_extension_profile_path;
+			}
 		}
+
 		if (rememberCertificate) {
 			SetRegistryBoolValue("rememberCertificate", true);
 			SetRegistryStringValue("certificatePath", certificatePath);
 			SetRegistryStringValue("certificatePassword", certificatePassword);
 			SetRegistryStringValue("profilePath", profilePath);
+			if (enableExtensionProfilePath) {
+				SetRegistryStringValue("extensionProfilePath", extensionProfilePath);
+			}
 		}
 		else {
 			SetRegistryBoolValue("rememberCertificate", false);
