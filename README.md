@@ -1,3 +1,6 @@
+# 项目迁移说明
+本项目迁移至新的地址，当前项目不再维护，请移至[这里](https://github.com/TIT-Frontend/ipa-win-builder)
+
 ## 功能
 本工具用于在win系统上，支持的功能有：
 - 获取连接的手机设备列表
